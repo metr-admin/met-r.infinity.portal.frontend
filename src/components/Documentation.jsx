@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Header from './documentation/Header';
@@ -7,6 +7,7 @@ import MainContent from './documentation/MainContent';
 import Footer from './documentation/Footer';
 import { PageLoader, ErrorDisplay } from './Loader';
 import { useDocsByRepository, useAllDocs, useDocById } from '../hooks/useDocumentation';
+import { processDocumentHierarchy } from '../utils/hierarchyProcessor';
 
 const Documentation = () => {
   const { branchName } = useParams();
@@ -18,17 +19,60 @@ const Documentation = () => {
     : useAllDocs();
 
   const allDocs = docsData?.data || [];
+  
+  // Process documents into hierarchical structure
+  const hierarchicalDocs = useMemo(() => {
+    return processDocumentHierarchy(allDocs);
+  }, [allDocs]);
 
-  const firstDocId = allDocs.length > 0
-    ? (allDocs.find(doc => doc.attributes?.fileName?.toLowerCase() !== 'index.html') || allDocs[0])?.id
-    : null;
+  // Get first available document ID for initial selection
+  const getFirstDocId = useMemo(() => {
+    if (!hierarchicalDocs?.length) return null;
+    
+    // Find first document in hierarchical structure
+    const findFirstDoc = (items) => {
+      for (const item of items) {
+        if (item.type === 'document' && item.docId) {
+          return item.docId;
+        }
+        if (item.children?.length > 0) {
+          const childDoc = findFirstDoc(item.children);
+          if (childDoc) return childDoc;
+        }
+      }
+      return null;
+    };
+    
+    return findFirstDoc(hierarchicalDocs);
+  }, [hierarchicalDocs]);
 
-  const docIdToFetch = selectedDocId || firstDocId;
+  const docIdToFetch = selectedDocId || getFirstDocId;
   const { data: currentDocData } = useDocById(docIdToFetch);
   const currentDoc = currentDocData?.data;
 
-  const handleDocSelect = (docId) => {
+  // Debug logging
+  console.log('Documentation Debug:', {
+    allDocsCount: allDocs?.length,
+    hierarchicalDocsCount: hierarchicalDocs?.length,
+    selectedDocId,
+    getFirstDocId,
+    docIdToFetch,
+    currentDoc: currentDoc?.id,
+    hierarchicalDocs: hierarchicalDocs?.slice(0, 2) // First 2 items for debugging
+  });
+
+  const handleDocSelect = (docId, anchor = null) => {
     setSelectedDocId(docId);
+    
+    // Handle anchor navigation after document loads
+    if (anchor) {
+      setTimeout(() => {
+        const element = document.getElementById(anchor);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    }
   };
 
   if (loading) {
@@ -55,12 +99,18 @@ const Documentation = () => {
         <div className="flex relative min-h-0">
           <Sidebar
             allDocs={allDocs}
+            hierarchicalDocs={hierarchicalDocs}
             currentDoc={currentDoc}
             onDocSelect={handleDocSelect}
             sidebarOpen={sidebarOpen}
             setSidebarOpen={setSidebarOpen}
           />
-          <MainContent currentDoc={currentDoc} allDocs={allDocs} onDocSelect={handleDocSelect} />
+          <MainContent 
+            currentDoc={currentDoc} 
+            allDocs={allDocs} 
+            onDocSelect={handleDocSelect}
+            hierarchicalDocs={hierarchicalDocs}
+          />
         </div>
         <Footer />
       </div>

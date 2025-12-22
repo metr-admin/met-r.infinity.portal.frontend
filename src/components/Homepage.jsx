@@ -11,19 +11,22 @@ import ellipse1476 from '../assets/svg/Ellipse 1476.svg';
 import ellipse1477 from '../assets/svg/Ellipse 1477.svg';
 import subtractSvg from '../assets/svg/Subtract.svg';
 import maskGroupSvg from '../assets/svg/Mask Group.svg';
-import icon1 from '../assets/svg/icon1.svg';
-import icon2 from '../assets/svg/icon2.svg';
-import icon3 from '../assets/svg/icon3.svg';
-import icon4 from '../assets/svg/icon4.svg';
+import documentIcon from '../assets/svg/icons8-document-128.png';
 import MobileMenu from './MobileMenu';
 
 const Homepage = () => {
   const navigate = useNavigate();
   const { openChat, repositories, repositoriesLoading: loading, repositoriesError: error } = useApp();
 
-  // Icon colors for cards
-  const cardColors = ['bg-[#00d5be]', 'bg-[#ff8904]', 'bg-[#51a2ff]', 'bg-[#c27aff]'];
-  const icons = [icon1, icon2, icon3, icon4];
+  // Bold Metallic colors for cards
+  const cardColors = [
+    'bg-gradient-to-br from-[#2563eb] via-[#3b82f6] to-[#1d4ed8] shadow-blue-500/50', // Bold Space Blue
+    'bg-gradient-to-br from-[#7c3aed] via-[#8b5cf6] to-[#6d28d9] shadow-purple-500/50', // Bold Purple
+    'bg-gradient-to-br from-[#f59e0b] via-[#fbbf24] to-[#d97706] shadow-yellow-500/50', // Bold Golden
+    'bg-gradient-to-br from-[#8B0000] via-[#B22222] to-[#660000] shadow-red-800/50', // Dark Red
+    'bg-gradient-to-br from-[#ea580c] via-[#fb923c] to-[#c2410c] shadow-orange-500/50', // Bold Orange
+    'bg-gradient-to-br from-[#059669] via-[#10b981] to-[#047857] shadow-green-500/50'  // Bold Green
+  ];
 
 
 
@@ -161,15 +164,15 @@ const Homepage = () => {
               ) : error ? (
                 <ErrorDisplay message={error} onRetry={() => window.location.reload()} />
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12 relative z-10">
-                  {repositories.map((repo, index) => {
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12 relative z-10 max-w-6xl mx-auto">
+                  {repositories.slice(0, 9).map((repo, index) => {
                     const branchName = repo.attributes?.branch;
                     const displayName = formatBranchName(branchName);
                     
                     return (
                       <TopicCard 
                         key={repo.id}
-                        icon={icons[index % icons.length]} 
+                        icon={documentIcon} 
                         title={displayName || `Module ${index + 1}`} 
                         bgColor={cardColors[index % cardColors.length]}
                         onClick={() => handleCardClick(branchName)}
@@ -267,24 +270,32 @@ const Homepage = () => {
   );
 };
 
-// Topic Card Component
+// Topic Card Component - Rectangular Design
 const TopicCard = ({ icon, title, bgColor, onClick }) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      whileHover={{ scale: 1.05, y: -5 }}
+      whileHover={{ scale: 1.02, y: -2 }}
       whileTap={{ scale: 0.98 }}
-      className="bg-white bg-opacity-40 backdrop-blur-sm rounded-2xl relative hover:bg-opacity-60 transition-all duration-300 hover:shadow-lg w-full max-w-sm h-64 sm:h-80 lg:h-[336px] p-4 sm:p-6 cursor-pointer group mx-auto"
+      className="bg-white bg-opacity-80 backdrop-blur-sm rounded-xl relative hover:bg-opacity-90 transition-all duration-300 hover:shadow-xl w-full h-32 sm:h-36 lg:h-40 p-4 sm:p-6 cursor-pointer group border border-gray-200/50 shadow-md"
       onClick={onClick}
     >
-      <div className={`w-10 h-10 sm:w-12 sm:h-12 ${bgColor} rounded-2xl flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300`}>
-        <img src={icon} alt="" className="w-5 h-5 sm:w-6 sm:h-6" />
+      <div className="flex items-center gap-4 h-full">
+        <div className={`w-12 h-12 sm:w-14 sm:h-14 ${bgColor} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 flex-shrink-0 backdrop-blur-sm border border-white/30 shadow-2xl relative overflow-hidden`}>
+          <div className="absolute inset-0 bg-gradient-to-tr from-white/20 via-transparent to-white/10 rounded-xl"></div>
+          <img src={icon} alt="" className="w-6 h-6 sm:w-7 sm:h-7 relative z-10 drop-shadow-lg" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-bold text-lg sm:text-xl lg:text-2xl text-[#3d3e3f] group-hover:text-[#266EF6] transition-colors duration-300 leading-tight truncate">
+            {title}
+          </h3>
+          <p className="text-sm text-gray-600 mt-1 opacity-70 group-hover:opacity-100 transition-opacity">
+            Click to explore
+          </p>
+        </div>
       </div>
-      <h3 className="font-bold text-xl sm:text-2xl lg:text-4xl xl:text-[48px] text-[#3d3e3f] group-hover:text-[#266EF6] transition-colors duration-300 leading-tight">
-        {title}
-      </h3>
     </motion.div>
   );
 };

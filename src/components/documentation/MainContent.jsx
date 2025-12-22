@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import StandardTable from './StandardTable';
 import { formatBranchName } from '../../utils/formatBranchName';
 
-const MainContent = ({ currentDoc, allDocs, onDocSelect }) => {
+const MainContent = ({ currentDoc, allDocs, onDocSelect, hierarchicalDocs }) => {
   const { branchName } = useParams();
   const navigate = useNavigate();
   const [headings, setHeadings] = useState([]);
@@ -150,47 +150,66 @@ const MainContent = ({ currentDoc, allDocs, onDocSelect }) => {
       e.preventDefault();
       const linkHref = target.getAttribute('data-internal-link');
       
-      // Extract filename from href
-      const filename = linkHref.replace(/^.*\//, '').replace(/^\.\//, '');
+      // Extract filename and anchor from href
+      const [filePath, anchor] = linkHref.split('#');
+      const filename = filePath.replace(/^.*\//, '').replace(/^\.\//, '');
       
-      // Extract ID number from filename
-      const idMatch = filename.match(/(\d+)\.html$/);
-      const documentId = idMatch ? idMatch[1] : null;
+      // Create flattened list of all documents from hierarchical structure
+      const flattenDocs = (docs) => {
+        const result = [];
+        docs.forEach(doc => {
+          if (doc.type === 'document' && doc.docId) {
+            result.push(doc);
+          }
+          if (doc.children && doc.children.length > 0) {
+            result.push(...flattenDocs(doc.children));
+          }
+        });
+        return result;
+      };
       
-      // Find document by multiple matching strategies
-      const targetDoc = allDocs?.find(doc => {
-        const docFilename = doc.attributes?.fileName || '';
-        const docTitle = (doc.attributes?.htmlTitle || doc.attributes?.title || '').toLowerCase();
-        
-        // Try exact filename match
-        if (docFilename.toLowerCase() === filename.toLowerCase()) {
-          return true;
-        }
-        
-        // Try ID match
-        if (documentId && docFilename === `${documentId}.html`) {
-          return true;
-        }
-        
-        // Try title-based matching
-        const cleanLinkTitle = filename.replace(/\.html$/, '').replace(/[-_]/g, ' ').toLowerCase();
-        const cleanDocTitle = docTitle.replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim();
-        if (cleanDocTitle && cleanLinkTitle.includes(cleanDocTitle.substring(0, 20))) {
-          return true;
-        }
-        
-        // Try partial filename match
-        const linkBase = filename.replace(/\.html$/, '').toLowerCase();
-        const docBase = docFilename.replace(/\.html$/, '').toLowerCase();
-        if (linkBase.includes(docBase) || docBase.includes(linkBase)) {
-          return true;
-        }
-        
-        return false;
-      });
+      const hierarchicalDocsList = hierarchicalDocs ? flattenDocs(hierarchicalDocs) : [];
+      
+      // Find target document using multiple strategies
+      let targetDoc = null;
+      
+      // Strategy 1: Match by filename in hierarchical docs
+      if (hierarchicalDocsList.length > 0) {
+        const actualDoc = allDocs.find(doc => doc.id === hierarchicalDocsList.find(hDoc => {
+          const docFilename = allDocs.find(d => d.id === hDoc.docId)?.attributes?.fileName || '';
+          return docFilename.toLowerCase() === filename.toLowerCase();
+        })?.docId);
+        if (actualDoc) targetDoc = actualDoc;
+      }
+      
+      // Strategy 2: Direct filename match in allDocs
+      if (!targetDoc) {
+        targetDoc = allDocs.find(doc => {
+          const docFilename = doc.attributes?.fileName || '';
+          return docFilename.toLowerCase() === filename.toLowerCase();
+        });
+      }
+      
+      // Strategy 3: Partial filename match
+      if (!targetDoc) {
+        const baseName = filename.replace(/\.html$/, '').toLowerCase();
+        targetDoc = allDocs.find(doc => {
+          const docFilename = (doc.attributes?.fileName || '').replace(/\.html$/, '').toLowerCase();
+          return docFilename === baseName;
+        });
+      }
+      
+      // Strategy 4: Title-based matching
+      if (!targetDoc) {
+        const linkTitle = filename.replace(/\.html$/, '').replace(/[-_]/g, ' ').toLowerCase();
+        targetDoc = allDocs.find(doc => {
+          const docTitle = (doc.attributes?.htmlTitle || doc.attributes?.title || '').toLowerCase();
+          return docTitle.includes(linkTitle) || linkTitle.includes(docTitle);
+        });
+      }
       
       if (targetDoc) {
-        onDocSelect(targetDoc.id);
+        onDocSelect(targetDoc.id, anchor);
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     }
@@ -379,20 +398,29 @@ const MainContent = ({ currentDoc, allDocs, onDocSelect }) => {
     aElements.forEach(a => {
       a.className = 'text-blue-600 hover:text-blue-800 hover:underline transition-colors cursor-pointer';
       
-      // Handle ALL links - both href and existing data-internal-link
       const href = a.getAttribute('href');
       const existingLink = a.getAttribute('data-internal-link');
       
-      if ((href && href.includes('.html')) || (existingLink && existingLink.includes('.html'))) {
-        // Remove all attributes that cause new tab opening
+      // Handle internal HTML file links
+      if (href && (href.includes('.html') || href.startsWith('#'))) {
+        // Remove attributes that cause new tab opening
         a.removeAttribute('href');
         a.removeAttribute('target');
         a.removeAttribute('rel');
         
-        // Set our internal link data
-        const linkToUse = existingLink || href;
-        a.setAttribute('data-internal-link', linkToUse);
+        // Set internal link data
+        a.setAttribute('data-internal-link', href);
         a.style.cursor = 'pointer';
+      } else if (existingLink && (existingLink.includes('.html') || existingLink.startsWith('#'))) {
+        // Already processed internal link
+        a.removeAttribute('href');
+        a.removeAttribute('target');
+        a.removeAttribute('rel');
+        a.style.cursor = 'pointer';
+      } else if (href && (href.startsWith('http') || href.startsWith('mailto:'))) {
+        // External links - keep as is but ensure they open in new tab
+        a.setAttribute('target', '_blank');
+        a.setAttribute('rel', 'noopener noreferrer');
       }
     });
     
@@ -532,21 +560,33 @@ const MainContent = ({ currentDoc, allDocs, onDocSelect }) => {
           {/* Next/Previous Navigation */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-gray-200">
             {(() => {
-              if (!allDocs || allDocs.length === 0) return null;
+              if (!hierarchicalDocs || hierarchicalDocs.length === 0) return null;
               
-              const nonIndexDocs = allDocs.filter(doc => 
-                doc.attributes?.fileName?.toLowerCase() !== 'index.html'
-              );
-              const currentIndex = nonIndexDocs.findIndex(doc => doc.id === currentDoc?.id);
-              const prevDoc = currentIndex > 0 ? nonIndexDocs[currentIndex - 1] : null;
-              const nextDoc = currentIndex < nonIndexDocs.length - 1 ? nonIndexDocs[currentIndex + 1] : null;
+              // Flatten hierarchical structure to get ordered list of navigable documents
+              const flattenDocs = (docs) => {
+                const result = [];
+                docs.forEach(doc => {
+                  if (doc.type === 'document' && doc.docId) {
+                    result.push(doc);
+                  }
+                  if (doc.children && doc.children.length > 0) {
+                    result.push(...flattenDocs(doc.children));
+                  }
+                });
+                return result;
+              };
+              
+              const navigableDocs = flattenDocs(hierarchicalDocs);
+              const currentIndex = navigableDocs.findIndex(doc => doc.docId === currentDoc?.id);
+              const prevDoc = currentIndex > 0 ? navigableDocs[currentIndex - 1] : null;
+              const nextDoc = currentIndex < navigableDocs.length - 1 ? navigableDocs[currentIndex + 1] : null;
               
               return (
                 <>
                   <div className="flex-1 w-full sm:w-auto">
                     {prevDoc && (
                       <button
-                        onClick={() => onDocSelect(prevDoc.id)}
+                        onClick={() => onDocSelect(prevDoc.docId)}
                         className="flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors group w-full sm:w-auto"
                       >
                         <svg className="w-4 h-4 group-hover:-translate-x-1 transition-transform flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -554,7 +594,7 @@ const MainContent = ({ currentDoc, allDocs, onDocSelect }) => {
                         </svg>
                         <div className="text-left min-w-0">
                           <div className="text-xs text-gray-500 uppercase tracking-wider">Previous</div>
-                          <div className="font-medium text-sm sm:text-base truncate">{prevDoc.attributes?.htmlTitle || prevDoc.attributes?.title || 'Previous Page'}</div>
+                          <div className="font-medium text-sm sm:text-base truncate">{prevDoc.displayTitle || prevDoc.title}</div>
                         </div>
                       </button>
                     )}
@@ -563,12 +603,12 @@ const MainContent = ({ currentDoc, allDocs, onDocSelect }) => {
                   <div className="flex-1 text-left sm:text-right w-full sm:w-auto">
                     {nextDoc && (
                       <button
-                        onClick={() => onDocSelect(nextDoc.id)}
+                        onClick={() => onDocSelect(nextDoc.docId)}
                         className="flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors group ml-0 sm:ml-auto w-full sm:w-auto justify-start sm:justify-end"
                       >
                         <div className="text-left sm:text-right min-w-0 order-2 sm:order-1">
                           <div className="text-xs text-gray-500 uppercase tracking-wider">Next</div>
-                          <div className="font-medium text-sm sm:text-base truncate">{nextDoc.attributes?.htmlTitle || nextDoc.attributes?.title || 'Next Page'}</div>
+                          <div className="font-medium text-sm sm:text-base truncate">{nextDoc.displayTitle || nextDoc.title}</div>
                         </div>
                         <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform flex-shrink-0 order-1 sm:order-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
