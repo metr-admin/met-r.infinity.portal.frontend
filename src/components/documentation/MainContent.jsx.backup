@@ -2,18 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import StandardTable from './StandardTable';
 import { formatBranchName } from '../../utils/formatBranchName';
-import { createContentProcessor } from '../../config/contentConfig';
-import { createNavigationUtils } from '../../config/navigationConfig';
 
 const MainContent = ({ currentDoc, allDocs, onDocSelect, hierarchicalDocs }) => {
   const { branchName } = useParams();
   const navigate = useNavigate();
   const [headings, setHeadings] = useState([]);
   const [activeHeading, setActiveHeading] = useState('');
-  
-  // Initialize configurable processors (memoized to prevent re-creation)
-  const contentProcessor = React.useMemo(() => createContentProcessor(), []);
-  const navigationUtils = React.useMemo(() => createNavigationUtils(), []);
 
   // Create slug from text
   const createSlug = (text) => {
@@ -23,16 +17,42 @@ const MainContent = ({ currentDoc, allDocs, onDocSelect, hierarchicalDocs }) => 
       .replace(/^-+|-+$/g, '');
   };
 
-  // Extract headings using configurable processor
+  // Extract headings from content and assign IDs
   const extractHeadings = (htmlContent) => {
-    return contentProcessor.extractHeadings(htmlContent);
+    if (!htmlContent) return [];
+    
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = htmlContent;
+    
+    const headingElements = tempDiv.querySelectorAll('h2, h3');
+    const extractedHeadings = [];
+    const usedIds = new Set();
+    
+    headingElements.forEach((heading) => {
+      const text = heading.textContent.trim();
+      const level = heading.tagName.toLowerCase();
+      let id = createSlug(text);
+      
+      // Ensure unique ID
+      let counter = 1;
+      let finalId = id;
+      while (usedIds.has(finalId)) {
+        finalId = `${id}-${counter}`;
+        counter++;
+      }
+      usedIds.add(finalId);
+      
+      extractedHeadings.push({ id: finalId, text, level });
+    });
+    
+    return extractedHeadings;
   };
 
   // Update headings and SEO metadata when document changes
   useEffect(() => {
     if (!currentDoc) return;
     
-    const content = contentProcessor.processContent(currentDoc.attributes?.htmlContent || currentDoc.attributes?.content || currentDoc.attributes?.bodyContent);
+    const content = processContent(currentDoc.attributes?.htmlContent || currentDoc.attributes?.content || currentDoc.attributes?.bodyContent);
     const extractedHeadings = extractHeadings(content);
     setHeadings(extractedHeadings);
     
@@ -123,20 +143,151 @@ const MainContent = ({ currentDoc, allDocs, onDocSelect, hierarchicalDocs }) => 
     }
   };
 
-  // Handle clicks on internal document links using configurable navigation
+  // Handle clicks on internal document links
   const handleContentClick = (e) => {
     const target = e.target.closest('a[data-internal-link]');
     if (target) {
       e.preventDefault();
       const linkHref = target.getAttribute('data-internal-link');
       
-      const { targetDoc, anchor } = navigationUtils.findDocument(linkHref, allDocs, hierarchicalDocs);
-      navigationUtils.navigateToDocument(targetDoc, anchor, onDocSelect);
+      // Extract filename and anchor from href
+      const [filePath, anchor] = linkHref.split('#');
+      const filename = filePath.replace(/^.*\//, '').replace(/^\.\//, '');
+      
+      // Create flattened list of all documents from hierarchical structure
+      const flattenDocs = (docs) => {
+        const result = [];
+        docs.forEach(doc => {
+          if (doc.type === 'document' && doc.docId) {
+            result.push(doc);
+          }
+          if (doc.children && doc.children.length > 0) {
+            result.push(...flattenDocs(doc.children));
+          }
+        });
+        return result;
+      };
+      
+      const hierarchicalDocsList = hierarchicalDocs ? flattenDocs(hierarchicalDocs) : [];
+      
+      // Find target document using multiple strategies
+      let targetDoc = null;
+      
+      // Strategy 1: Match by filename in hierarchical docs
+      if (hierarchicalDocsList.length > 0) {
+        const actualDoc = allDocs.find(doc => doc.id === hierarchicalDocsList.find(hDoc => {
+          const docFilename = allDocs.find(d => d.id === hDoc.docId)?.attributes?.fileName || '';
+          return docFilename.toLowerCase() === filename.toLowerCase();
+        })?.docId);
+        if (actualDoc) targetDoc = actualDoc;
+      }
+      
+      // Strategy 2: Direct filename match in allDocs
+      if (!targetDoc) {
+        targetDoc = allDocs.find(doc => {
+          const docFilename = doc.attributes?.fileName || '';
+          return docFilename.toLowerCase() === filename.toLowerCase();
+        });
+      }
+      
+      // Strategy 3: Partial filename match
+      if (!targetDoc) {
+        const baseName = filename.replace(/\.html$/, '').toLowerCase();
+        targetDoc = allDocs.find(doc => {
+          const docFilename = (doc.attributes?.fileName || '').replace(/\.html$/, '').toLowerCase();
+          return docFilename === baseName;
+        });
+      }
+      
+      // Strategy 4: Title-based matching
+      if (!targetDoc) {
+        const linkTitle = filename.replace(/\.html$/, '').replace(/[-_]/g, ' ').toLowerCase();
+        targetDoc = allDocs.find(doc => {
+          const docTitle = (doc.attributes?.htmlTitle || doc.attributes?.title || '').toLowerCase();
+          return docTitle.includes(linkTitle) || linkTitle.includes(docTitle);
+        });
+      }
+      
+      if (targetDoc) {
+        onDocSelect(targetDoc.id, anchor);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     }
   };
-  // Use configurable content processor
+  // Process HTML content for clean rendering
   const processContent = (htmlContent) => {
-    return contentProcessor.processContent(htmlContent);
+    if (!htmlContent) return '';
+    
+    try {
+      // Create temporary div to parse HTML
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = htmlContent;
+      
+      // Remove navigation, index, and unwanted elements
+      const unwantedElements = tempDiv.querySelectorAll(`
+        nav, .nav, [role="toc"], .toc,
+        .ditasearch, .searchbox,
+        .breadcrumb, .breadcrumbs,
+        .header, .footer,
+        .sidebar, .navigation,
+        .map, ul.map,
+        .topicref,
+        script, style
+      `);
+      unwantedElements.forEach(el => el.remove());
+      
+      // Remove index/table of contents lists
+      const indexLists = tempDiv.querySelectorAll('ul li a[href*=".html"]');
+      indexLists.forEach(link => {
+        const listItem = link.closest('li');
+        const parentList = link.closest('ul');
+        if (listItem && parentList && parentList.children.length <= 10) {
+          // If it's a small list with HTML links, likely an index - remove the whole list
+          parentList.remove();
+        }
+      });
+      
+      // Remove any remaining navigation-like lists
+      const navLists = tempDiv.querySelectorAll('ul');
+      navLists.forEach(list => {
+        const links = list.querySelectorAll('a[href*=".html"]');
+        if (links.length > 3) {
+          // If list has many HTML file links, it's likely navigation
+          list.remove();
+        }
+      });
+      
+      // Remove ALL h1 tags from content (we'll show title separately)
+      const h1Elements = tempDiv.querySelectorAll('h1');
+      h1Elements.forEach(h1 => h1.remove());
+      
+      // Extract main content
+      let mainContent = tempDiv.querySelector('main[role="main"], article, .main-content, body');
+      if (!mainContent) {
+        mainContent = tempDiv;
+      }
+      
+      let processedHtml = mainContent.innerHTML;
+      
+      // Fix image paths
+      const strapiUrl = import.meta.env.VITE_STRAPI_URL;
+      processedHtml = processedHtml.replace(
+        /src="([^"]*\.(jpg|jpeg|png|gif|svg))"/gi,
+        (match, imagePath) => {
+          if (imagePath.startsWith('http')) return match;
+          if (imagePath.startsWith('/uploads')) return `src="${strapiUrl}${imagePath}"`;
+          if (imagePath.includes('media/') || !imagePath.startsWith('/')) {
+            return `src="${strapiUrl}/uploads/${imagePath.replace(/^.*\//, '')}"`;
+          }
+          return `src="${strapiUrl}/uploads/${imagePath}"`;
+        }
+      );
+      
+      return processedHtml;
+    } catch (error) {
+      console.error('Error processing content:', error);
+      return htmlContent;
+    }
   };
   
   // Process and render content with proper styling for all elements
@@ -362,7 +513,7 @@ const MainContent = ({ currentDoc, allDocs, onDocSelect, hierarchicalDocs }) => 
   }
   
   const { attributes } = currentDoc;
-  const processedContent = contentProcessor.processContent(attributes?.htmlContent || attributes?.content || attributes?.bodyContent);
+  const processedContent = processContent(attributes?.htmlContent || attributes?.content || attributes?.bodyContent);
   const contentElements = renderStyledContent(processedContent);
   
   return (
@@ -372,28 +523,23 @@ const MainContent = ({ currentDoc, allDocs, onDocSelect, hierarchicalDocs }) => 
         {/* Breadcrumb */}
         <div className="mb-4 sm:mb-6">
           <nav className="flex items-center space-x-2 text-xs sm:text-sm text-gray-500 overflow-x-auto">
-            {navigationUtils.generateBreadcrumb(
-              branchName,
-              attributes?.htmlTitle || attributes?.title,
-              formatBranchName,
-              navigate
-            ).map((item, index, array) => (
-              <React.Fragment key={index}>
-                {item.onClick ? (
-                  <button 
-                    onClick={item.onClick}
-                    className="hover:text-blue-600 transition-colors whitespace-nowrap"
-                  >
-                    {item.label}
-                  </button>
-                ) : (
-                  <span className="text-gray-900 font-medium truncate">
-                    {item.label}
-                  </span>
-                )}
-                {index < array.length - 1 && <span>/</span>}
-              </React.Fragment>
-            ))}
+            <button 
+              onClick={() => navigate('/')}
+              className="hover:text-blue-600 transition-colors whitespace-nowrap"
+            >
+              Home
+            </button>
+            <span>/</span>
+            <button 
+              onClick={() => navigate(`/documentation/${branchName}`)}
+              className="hover:text-blue-600 transition-colors whitespace-nowrap"
+            >
+              {formatBranchName(branchName) || 'Documentation'}
+            </button>
+            <span>/</span>
+            <span className="text-gray-900 font-medium truncate">
+              {attributes?.htmlTitle || attributes?.title || 'Current Page'}
+            </span>
           </nav>
         </div>
 
@@ -416,7 +562,24 @@ const MainContent = ({ currentDoc, allDocs, onDocSelect, hierarchicalDocs }) => 
             {(() => {
               if (!hierarchicalDocs || hierarchicalDocs.length === 0) return null;
               
-              const { prevDoc, nextDoc } = navigationUtils.getNavigationContext(currentDoc, hierarchicalDocs);
+              // Flatten hierarchical structure to get ordered list of navigable documents
+              const flattenDocs = (docs) => {
+                const result = [];
+                docs.forEach(doc => {
+                  if (doc.type === 'document' && doc.docId) {
+                    result.push(doc);
+                  }
+                  if (doc.children && doc.children.length > 0) {
+                    result.push(...flattenDocs(doc.children));
+                  }
+                });
+                return result;
+              };
+              
+              const navigableDocs = flattenDocs(hierarchicalDocs);
+              const currentIndex = navigableDocs.findIndex(doc => doc.docId === currentDoc?.id);
+              const prevDoc = currentIndex > 0 ? navigableDocs[currentIndex - 1] : null;
+              const nextDoc = currentIndex < navigableDocs.length - 1 ? navigableDocs[currentIndex + 1] : null;
               
               return (
                 <>

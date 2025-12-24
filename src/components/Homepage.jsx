@@ -12,6 +12,7 @@ import ellipse1477 from '../assets/svg/Ellipse 1477.svg';
 import subtractSvg from '../assets/svg/Subtract.svg';
 import maskGroupSvg from '../assets/svg/Mask Group.svg';
 import documentIcon from '../assets/svg/icons8-document-128.png';
+import aiSearchIcon from '../assets/svg/ai search.png';
 import MobileMenu from './MobileMenu';
 
 const Homepage = () => {
@@ -20,15 +21,13 @@ const Homepage = () => {
 
   // Bold Metallic colors for cards
   const cardColors = [
-    'bg-gradient-to-br from-[#2563eb] via-[#3b82f6] to-[#1d4ed8] shadow-blue-500/50', // Bold Space Blue
-    'bg-gradient-to-br from-[#7c3aed] via-[#8b5cf6] to-[#6d28d9] shadow-purple-500/50', // Bold Purple
-    'bg-gradient-to-br from-[#f59e0b] via-[#fbbf24] to-[#d97706] shadow-yellow-500/50', // Bold Golden
-    'bg-gradient-to-br from-[#8B0000] via-[#B22222] to-[#660000] shadow-red-800/50', // Dark Red
-    'bg-gradient-to-br from-[#ea580c] via-[#fb923c] to-[#c2410c] shadow-orange-500/50', // Bold Orange
-    'bg-gradient-to-br from-[#059669] via-[#10b981] to-[#047857] shadow-green-500/50'  // Bold Green
+    'bg-gradient-to-br from-[#60a5fa] via-[#93c5fd] to-[#3b82f6] shadow-blue-500/50', // Light Space Blue
+    'bg-gradient-to-br from-[#a78bfa] via-[#c4b5fd] to-[#8b5cf6] shadow-purple-500/50', // Light Purple
+    'bg-gradient-to-br from-[#fbbf24] via-[#fcd34d] to-[#f59e0b] shadow-yellow-500/50', // Light Golden
+    'bg-gradient-to-br from-[#f87171] via-[#fca5a5] to-[#ef4444] shadow-red-500/50', // Light Red
+    'bg-gradient-to-br from-[#fb923c] via-[#fdba74] to-[#f97316] shadow-orange-500/50', // Light Orange
+    'bg-gradient-to-br from-[#34d399] via-[#6ee7b7] to-[#10b981] shadow-green-500/50'  // Light Green
   ];
-
-
 
   // Handle card click - navigate to documentation with branch name
   const handleCardClick = (branchName) => {
@@ -41,232 +40,212 @@ const Homepage = () => {
   };
 
   return (
-    <div className="w-full min-h-screen bg-[#fbf8f8]">
-      <div className="bg-[#fbf8f8] relative min-h-screen w-full max-w-[1440px] mx-auto">
-        
-        {/* Hero Section */}
-        <section className="hero-section relative h-[777px] w-full overflow-hidden">
+    <>
+      {/* Mobile Menu - Rendered outside main container */}
+      <MobileMenu />
+      
+      <div className="w-full min-h-screen bg-[#fbf8f8]">
+        <div className="bg-[#fbf8f8] relative min-h-screen w-full max-w-[1440px] mx-auto">
           
-          {/* Background Decorative Elements */}
-          <div className="absolute -bottom-2 -right-0  opacity-100 opacity-100">
-            <img src={vector1Svg} alt="" className="w-full h-full object-cover" />
-          </div>
-          
-          <div className="absolute -bottom-2 -right-0  opacity-100">
-            <img src={vector2Svg} alt="" className="w-full h-full object-cover" />
-          </div>
-          
-          <div className="absolute -right-26 -bottom-26 rotate-[0deg] opacity-100">
-            <img src={vectorSvg} alt="" className="w-full h-full object-cover" />
-          </div>
-
-          {/* Header */}
-          <header className="relative z-10 flex items-center justify-between px-4 sm:px-6 lg:px-20 py-4">
-            {/* Logo */}
-            <a href="/" className="flex items-center gap-4 hover:opacity-80 transition-opacity">
-              <img src={logoImg} alt="MetR Logo" className="w-10 h-10 sm:w-12 sm:h-12 lg:w-16 lg:h-16 object-contain" />
-            </a>
-
-            {/* Navigation Menu - Hidden on mobile */}
-            <nav className="hidden lg:flex gap-12 items-center absolute left-1/2 transform -translate-x-1/2">
-              <a href="#" className="font-semibold text-lg text-[#3d3e3f] hover:text-[#266EF6] transition-colors duration-200">Releases</a>
-              <a href="#" className="font-semibold text-lg text-[#3d3e3f] hover:text-[#266EF6] transition-colors duration-200">Features</a>
-              <a href="#" className="font-semibold text-lg text-[#3d3e3f] hover:text-[#266EF6] transition-colors duration-200">Pricing</a>
-              <a href="#" className="font-semibold text-lg text-[#3d3e3f] hover:text-[#266EF6] transition-colors duration-200">About</a>
-            </nav>
+          {/* Hero Section */}
+          <section className="hero-section relative h-[645px] w-full overflow-hidden">
             
-            {/* Mobile Menu */}
-            <MobileMenu />
-          </header>
-
-          {/* Main Content */}
-          <div className="relative z-10 flex flex-col items-center justify-center text-center px-4 sm:px-6 mt-12 sm:mt-16 lg:mt-32">
-            <h1 className="font-bold text-3xl sm:text-4xl lg:text-6xl xl:text-[64px] text-[#3d3e3f] mb-4 sm:mb-6 leading-tight max-w-4xl">
-              How can we help you
-            </h1>
-            <p className="text-base sm:text-lg lg:text-2xl text-[#3d3e3f] mb-8 sm:mb-12 max-w-2xl px-4">
-              Search here to get answers to your questions
-            </p>
-
-            {/* Search Bar */}
-            <div className="w-full max-w-md lg:max-w-lg mb-6">
-              <div 
-                onClick={() => openChat('general')}
-                className="bg-[#3d3e3f] bg-opacity-50 backdrop-blur-sm rounded-[20px] h-9 lg:h-10 flex items-center px-3 cursor-pointer hover:bg-opacity-60 transition-all"
-              >
-                <div className="flex items-center gap-2 text-white text-sm lg:text-base">
-                  <span className="text-lg">🔍</span>
-                  <span>Search the Doc</span>
-                </div>
-              </div>
+            {/* Background Decorative Elements */}
+            <div className="absolute -bottom-2 -right-0  opacity-100 opacity-100">
+              <img src={vector1Svg} alt="" className="w-full h-full object-cover" />
+            </div>
+            
+            <div className="absolute -bottom-2 -right-0  opacity-100">
+              <img src={vector2Svg} alt="" className="w-full h-full object-cover" />
+            </div>
+            
+            <div className="absolute -right-26 -bottom-26 rotate-[0deg] opacity-100">
+              <img src={vectorSvg} alt="" className="w-full h-full object-cover" />
             </div>
 
-            {/* Suggested Search Tags */}
-            <div className="flex flex-wrap items-center justify-center gap-3 max-w-2xl">
-              <span className="text-sm lg:text-base text-[#3d3e3f] whitespace-nowrap">Suggested Search:</span>
-              <span className="bg-[#3d3e3f] text-white px-[15px] py-[2px] rounded-[20px] text-base cursor-pointer hover:bg-[#2a2b2c] transition-colors duration-200">Code</span>
-              <span className="bg-[#3d3e3f] text-white px-[15px] py-[2px] rounded-[20px] text-base cursor-pointer hover:bg-[#2a2b2c] transition-colors duration-200">Wordpress</span>
-              <span className="bg-[#3d3e3f] text-white px-[15px] py-[2px] rounded-[20px] text-base cursor-pointer hover:bg-[#2a2b2c] transition-colors duration-200">Security</span>
-            </div>
-          </div>
-        </section>
+            {/* Header */}
+            <header className="relative z-10 flex items-center justify-between px-4 sm:px-6 lg:px-20 py-4">
+              {/* Logo */}
+              <a href="/" className="flex items-center gap-4 hover:opacity-80 transition-opacity">
+                <img src={logoImg} alt="MetR Logo" className="w-10 h-10 sm:w-12 sm:h-12 lg:w-16 lg:h-16 object-contain" />
+              </a>
 
-        {/* Recommended Topics Section */}
-        <section className="relative py-16 lg:py-24 overflow-hidden">
-          {/* Background Decorative Elements */}
-          <div className="absolute left-1/2 top-16 transform -translate-x-1/2 w-[400px] lg:w-[699px] h-[400px] lg:h-[699px] opacity-15">
-            <img src={subtractSvg} alt="" className="w-full h-full object-cover" />
-          </div>
-          
-          <div className="absolute left-[360px] top-80 lg:top-[550px] transform -translate-x-1/2 w-32 lg:w-[202px] h-32 lg:h-[202px]">
-            <img src={ellipse1477} alt="" className="w-full h-full object-cover" />
-          </div>
-
-          <div className="absolute right-8 lg:right-[185px] top-20 lg:top-[92px] w-16 lg:w-[79px] h-16 lg:h-[79px]">
-            <img src={ellipse1476} alt="" className="w-full h-full object-cover" />
-          </div>
-
-          <div className="relative z-10 container mx-auto px-6">
-            {/* Section Title */}
-            <div className="text-center mb-16 lg:mb-24">
-              <h2 className="font-bold text-3xl lg:text-5xl text-[#3d3e3f] mb-6">
-                Recommended Topics
-              </h2>
-              <p className="text-lg lg:text-2xl text-[#3d3e3f] max-w-4xl mx-auto">
-                Loaded with awesome features like Documentation, Knowledge base,<br className="hidden lg:block" />
-                Forum & more!
-              </p>
-            </div>
-
-            {/* Topic Cards - Dynamic from API */}
-            <div className="relative">
-              <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] opacity-100 z-0">
-                <img src={subtractSvg} alt="" className="w-full h-full object-contain" />
-              </div>
-              
-              {loading ? (
-                <div className="text-center py-12">
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="flex flex-col items-center gap-4"
-                  >
-                    <div className="relative w-12 h-12">
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                        className="w-12 h-12 border-4 border-gray-200 border-t-accent-blue rounded-full"
-                      />
-                    </div>
-                    <p className="text-lg text-gray-500">Loading modules...</p>
-                  </motion.div>
-                </div>
-              ) : error ? (
-                <ErrorDisplay message={error} onRetry={() => window.location.reload()} />
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12 relative z-10 max-w-6xl mx-auto">
-                  {repositories.slice(0, 9).map((repo, index) => {
-                    const branchName = repo.attributes?.branch;
-                    const displayName = formatBranchName(branchName);
-                    
-                    return (
-                      <TopicCard 
-                        key={repo.id}
-                        icon={documentIcon} 
-                        title={displayName || `Module ${index + 1}`} 
-                        bgColor={cardColors[index % cardColors.length]}
-                        onClick={() => handleCardClick(branchName)}
-                      />
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* Question Link */}
-            <div className="text-center">
-              <p className="text-lg lg:text-xl text-[#51a2ff] font-bold">
-                Want to know more or have a <span className="underline cursor-pointer hover:text-[#3d5afe] transition-colors">Question?</span>
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* Newsletter Section */}
-        <section className="py-16 lg:py-24 px-6">
-          <div className="container mx-auto max-w-6xl">
-            <div className="relative rounded-xl lg:rounded-2xl overflow-hidden min-h-[300px] lg:h-[400px]">
-              {/* Background Pattern */}
-              <div className="absolute inset-0">
-                <img src={maskGroupSvg} alt="" className="w-full h-full object-cover" />
-              </div>
-
-              {/* Content */}
-              <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between h-full p-8 lg:px-16 lg:py-12 gap-8">
-                <div className="text-white text-center lg:text-left">
-                  <h3 className="font-bold text-2xl lg:text-4xl xl:text-[40px] leading-tight mb-6">
-                    Great Customer<br />
-                    Relationships start here
-                  </h3>
-                </div>
-                
-                <div className="text-white w-full lg:w-auto">
-                  <h4 className="font-bold text-xl lg:text-3xl mb-6 text-center lg:text-left">Subscribe Now</h4>
-                  <div className="flex flex-col sm:flex-row gap-3 mb-4">
-                    <input 
-                      type="email" 
-                      placeholder="Enter your email"
-                      className="flex-1 lg:w-[317px] h-12 lg:h-[50px] px-5 py-3 rounded-md border border-[#dfe4ea] text-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
-                    />
-                    <button className="bg-[#3758f9] text-white px-7 py-3 rounded-[25px] font-bold hover:bg-[#2a47e8] transition-colors duration-200 whitespace-nowrap">
-                      Submit
-                    </button>
-                  </div>
-                  <p className="text-sm lg:text-base text-center lg:text-left opacity-90">You will receive every news and pro tips</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Footer */}
-        <footer className="bg-white py-16 lg:py-24 px-6">
-          <div className="container mx-auto max-w-6xl">
-            <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
-              {/* Company Info */}
-              <div className="w-full lg:w-[384px] flex flex-col gap-8">
-                <a href="/" className="w-24 lg:w-[120px] h-8 hover:opacity-80 transition-opacity">
-                  <img src={logoImg} alt="MetR Logo" className="w-full h-full object-contain" />
+              {/* Navigation Menu - Hidden on mobile */}
+              <nav className="hidden lg:flex gap-12 items-center absolute left-1/2 transform -translate-x-1/2">
+                <a 
+                  href="#modules" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    document.getElementById('modules')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="font-semibold text-lg text-[#3d3e3f] hover:text-[#266EF6] transition-colors duration-200"
+                >
+                  Modules
                 </a>
-                <p className="text-sm text-[#3d3e3f]">
-                  © 2024 MetR Infinity. All rights reserved
+                <a 
+                  href="https://metapercept.com/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="font-semibold text-lg text-[#3d3e3f] hover:text-[#266EF6] transition-colors duration-200"
+                >
+                  About
+                </a>
+              </nav>
+              
+              {/* Mobile Menu Button Placeholder */}
+              <div className="lg:hidden w-8 h-8"></div>
+            </header>
+
+            {/* Main Content */}
+            <div className="relative z-10 flex flex-col items-center justify-center text-center px-4 sm:px-6 mt-12 sm:mt-16 lg:mt-32">
+              <h1 className="font-bold text-3xl sm:text-4xl lg:text-6xl xl:text-[64px] text-[#3d3e3f] mb-4 sm:mb-6 leading-tight max-w-4xl">
+                How can we help you
+              </h1>
+              <p className="text-base sm:text-lg lg:text-2xl text-[#3d3e3f] mb-8 sm:mb-12 max-w-2xl px-4">
+                Search here to get answers to your questions
+              </p>
+
+              {/* Search Bar */}
+              <div className="w-full max-w-md lg:max-w-2xl mb-6">
+                <div 
+                  onClick={() => openChat('general')}
+                  className="relative bg-white backdrop-blur-md rounded-full h-14 lg:h-16 flex items-center px-6 cursor-pointer hover:shadow-2xl transition-all duration-300 border-2 border-gray-300 hover:border-[#266EF6] group shadow-lg"
+                >
+                  <div className="flex items-center gap-4 text-gray-600 text-base lg:text-lg w-full">
+                    <img 
+                      src={aiSearchIcon} 
+                      alt="AI Search" 
+                      className="w-8 h-8 lg:w-10 lg:h-10 opacity-80 group-hover:opacity-100 transition-opacity duration-300 filter brightness-0 saturate-100"
+                    />
+                    <span className="group-hover:text-[#266EF6] transition-colors duration-300">AI Search for the Documentation...</span>
+                  </div>
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-r from-[#266EF6]/5 to-[#7c3aed]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Recommended Topics Section */}
+          <section id="modules" className="relative py-16 lg:py-24 overflow-hidden">
+            {/* Background Decorative Elements */}
+            <div className="absolute left-1/2 top-16 transform -translate-x-1/2 w-[400px] lg:w-[699px] h-[400px] lg:h-[699px] opacity-15">
+              <img src={subtractSvg} alt="" className="w-full h-full object-cover" />
+            </div>
+            
+            <div className="absolute left-[360px] top-80 lg:top-[550px] transform -translate-x-1/2 w-32 lg:w-[202px] h-32 lg:h-[202px]">
+              <img src={ellipse1477} alt="" className="w-full h-full object-cover opacity-50" />
+            </div>
+
+            <div className="absolute right-8 lg:right-[185px] top-20 lg:top-[92px] w-16 lg:w-[79px] h-16 lg:h-[79px]">
+              <img src={ellipse1476} alt="" className="w-full h-full object-cover opacity-20" />
+            </div>
+
+            <div className="relative z-10 container mx-auto px-6">
+              {/* Section Title */}
+              <div className="text-center mb-16 lg:mb-24">
+                <h2 className="font-bold text-3xl lg:text-5xl text-[#3d3e3f] mb-6">
+                  Infinity Modules
+                </h2>
+                <p className="text-lg lg:text-2xl text-[#3d3e3f] max-w-4xl mx-auto">
+                  Loaded with awesome features like AI Search, Documentation,<br className="hidden lg:block" />
+                  Knowledge base & more!
                 </p>
               </div>
 
-              {/* Footer Links */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 w-full">
-                <FooterColumn 
-                  title="Product"
-                  links={['Overview', 'Features', 'Tutorials', 'Pricing', 'Releases']}
-                />
-                <FooterColumn 
-                  title="Company"
-                  links={['About', 'Press', 'Careers', 'Contact', 'Partners']}
-                />
-                <FooterColumn 
-                  title="Support"
-                  links={['Help Center', 'Terms of service', 'Legal', 'Privacy Policy', 'Status']}
-                />
-                <FooterColumn 
-                  title="Follow us"
-                  links={['Facebook', 'Twitter', 'Dribbble', 'Instagram', 'LinkedIn']}
-                />
+              {/* Topic Cards - Dynamic from API */}
+              <div className="relative">
+                <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] opacity-100 z-0">
+                  <img src={subtractSvg} alt="" className="w-full h-full object-contain" />
+                </div>
+                
+                {loading ? (
+                  <div className="text-center py-12">
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="flex flex-col items-center gap-4"
+                    >
+                      <div className="relative w-12 h-12">
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                          className="w-12 h-12 border-4 border-gray-200 border-t-accent-blue rounded-full"
+                        />
+                      </div>
+                      <p className="text-lg text-gray-500">Loading modules...</p>
+                    </motion.div>
+                  </div>
+                ) : error ? (
+                  <ErrorDisplay message={error} onRetry={() => window.location.reload()} />
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12 relative z-10 max-w-6xl mx-auto">
+                    {repositories.slice(0, 9).map((repo, index) => {
+                      const branchName = repo.attributes?.branch;
+                      const displayName = formatBranchName(branchName);
+                      
+                      return (
+                        <TopicCard 
+                          key={repo.id}
+                          icon={documentIcon} 
+                          title={displayName || `Module ${index + 1}`} 
+                          bgColor={cardColors[index % cardColors.length]}
+                          onClick={() => handleCardClick(branchName)}
+                        />
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
-          </div>
-        </footer>
+          </section>
+
+          {/* Footer */}
+          <footer className="bg-white py-8 px-6">
+            {/* Divider Section */}
+            <div className="relative pb-8">
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-gray-200 to-transparent opacity-30"></div>
+              <div className="relative flex items-center justify-center">
+                <div className="flex items-center space-x-4">
+                  <div className="w-16 h-px bg-gradient-to-r from-transparent to-[#266EF6]"></div>
+                  <div className="w-3 h-3 rounded-full bg-[#266EF6] shadow-lg"></div>
+                  <div className="w-16 h-px bg-gradient-to-l from-transparent to-[#266EF6]"></div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="container mx-auto max-w-6xl">
+              <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4">
+                {/* Left side - Logo and Links */}
+                <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4 lg:gap-6">
+                  {/* Logo */}
+                  <a href="/" className="hover:opacity-80 transition-opacity">
+                    <img src={logoImg} alt="MetR Logo" className="w-16 h-16 object-contain" />
+                  </a>
+                  
+                  {/* Navigation Links */}
+                  <div className="flex flex-wrap items-center gap-1 text-base text-gray-700">
+                    <a href="https://metapercept.com/" target="_blank"  className="hover:text-[#266EF6] transition-colors">Metapercept.com</a>
+                    <span className="mx-2 text-gray-400">/</span>
+                    <a href="#" className="hover:text-[#266EF6] transition-colors">Legal</a>
+                    <span className="mx-2 text-gray-400">/</span>
+                    <a href="#" className="hover:text-[#266EF6] transition-colors">Feedback</a>
+                    <span className="mx-2 text-gray-400">/</span>
+                    <a href="https://metapercept.com/contact" target="_blank" className="hover:text-[#266EF6] transition-colors">Contact Support</a>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Copyright Text - Below on mobile, same line on desktop */}
+              <div className="mt-4 lg:mt-2">
+                <p className="text-base text-gray-600">
+                  Copyright © 2025-2026 Metapercept Technology Services LLP • metR is the registered product under this copyright.
+                </p>
+              </div>
+            </div>
+          </footer>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
@@ -297,26 +276,6 @@ const TopicCard = ({ icon, title, bgColor, onClick }) => {
         </div>
       </div>
     </motion.div>
-  );
-};
-
-// Footer Column Component
-const FooterColumn = ({ title, links }) => {
-  return (
-    <div className="flex flex-col gap-6">
-      <h4 className="font-bold text-lg lg:text-2xl text-[#3d3e3f]">{title}</h4>
-      <div className="flex flex-col gap-3">
-        {links.map((link, index) => (
-          <a 
-            key={index} 
-            href="#" 
-            className="text-base text-[#3d3e3f] hover:text-[#266EF6] transition-colors duration-200 cursor-pointer"
-          >
-            {link}
-          </a>
-        ))}
-      </div>
-    </div>
   );
 };
 

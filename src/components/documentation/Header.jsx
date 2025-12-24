@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import logoImg from '../../assets/images/Logo.png';
+import aiSearchIcon from '../../assets/svg/ai search.png';
 import { formatBranchName } from '../../utils/formatBranchName';
 import { useApp } from '../../context/AppContext';
 
@@ -80,27 +81,47 @@ const Header = ({ currentDoc, sidebarOpen, setSidebarOpen }) => {
 
         {/* Search - responsive */}
         <div className="relative hidden sm:block">
-          <input
-            type="text"
-            placeholder="Search"
-            onClick={() => openChat(domain)}
-            readOnly
-            className="w-32 sm:w-48 lg:w-96 h-[42px] pl-10 pr-4 border border-gray-200 rounded-lg text-sm cursor-pointer hover:border-[#266EF6] transition-colors"
-          />
-          <div className="absolute left-3 top-3 w-4 h-4 pointer-events-none">
-            <svg fill="none" viewBox="0 0 16 16" className="w-full h-full">
-              <path d="M14 14L11.1067 11.1067" stroke="#99A1AF" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round" />
-              <circle cx="7.33333" cy="7.33333" r="5.33333" stroke="#99A1AF" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+          <div className="flex items-center w-32 sm:w-48 lg:w-96 h-[42px] border border-gray-200 rounded-lg bg-white hover:border-[#266EF6] transition-colors">
+            {/* Search Icon */}
+            <div className="pl-4 pr-2">
+              <svg fill="none" viewBox="0 0 16 16" className="w-4 h-4">
+                <path d="M14 14L11.1067 11.1067" stroke="#99A1AF" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round" />
+                <circle cx="7.33333" cy="7.33333" r="5.33333" stroke="#99A1AF" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+            
+            {/* Search Input */}
+            <input
+              type="text"
+              placeholder="Search documentation..."
+              className="flex-1 h-full bg-transparent border-none outline-none text-sm placeholder-gray-500 pr-2"
+            />
+            
+            {/* AI Mode Button */}
+            <button 
+              onClick={() => openChat(domain)}
+              className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs rounded-md border border-gray-300 transition-colors flex items-center gap-1 mr-2"
+            >
+              <img 
+                src={aiSearchIcon} 
+                alt="AI" 
+                className="w-3 h-3"
+              />
+              AI Mode
+            </button>
           </div>
         </div>
 
         {/* Mobile search icon */}
-        <button className="sm:hidden p-2 rounded-md hover:bg-gray-100">
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 16 16">
-            <path d="M14 14L11.1067 11.1067" stroke="#99A1AF" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round" />
-            <circle cx="7.33333" cy="7.33333" r="5.33333" stroke="#99A1AF" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+        <button 
+          onClick={() => openChat(domain)}
+          className="sm:hidden p-2 rounded-md hover:bg-gray-100 flex items-center gap-1"
+        >
+          <img 
+            src={aiSearchIcon} 
+            alt="AI Search" 
+            className="w-5 h-5"
+          />
         </button>
       </div>
     </header>
