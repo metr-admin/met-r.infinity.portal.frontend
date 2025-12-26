@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Header from './documentation/Header';
@@ -8,6 +8,7 @@ import Footer from './documentation/Footer';
 import { PageLoader, ErrorDisplay } from './Loader';
 import { useDocsByRepository, useAllDocs, useDocById } from '../hooks/useDocumentation';
 import { processDocumentHierarchy } from '../utils/hierarchyProcessor';
+import { sidebarCache } from '../utils/sidebarIndexCache';
 
 const Documentation = () => {
   const { branchName } = useParams();
@@ -24,6 +25,32 @@ const Documentation = () => {
   const hierarchicalDocs = useMemo(() => {
     return processDocumentHierarchy(allDocs);
   }, [allDocs]);
+
+  // Initialize sidebar cache on mount
+  useEffect(() => {
+    sidebarCache.initialize();
+  }, []);
+
+  // Listen for navigation events from ChatModal
+  useEffect(() => {
+    const handleNavigateToDoc = (event) => {
+      const { filepath } = event.detail;
+      if (filepath && sidebarCache.isReady()) {
+        const docId = sidebarCache.getDocIdByFilepath(filepath);
+        
+        if (docId) {
+          console.log('🎯 Found doc ID:', docId, 'for filepath:', filepath);
+          setSelectedDocId(docId);
+        } else {
+          console.warn('⚠️ No doc found for filepath:', filepath);
+          console.log('Available mappings:', Object.keys(sidebarCache.getAllMappings()).slice(0, 10));
+        }
+      }
+    };
+
+    window.addEventListener('navigateToDoc', handleNavigateToDoc);
+    return () => window.removeEventListener('navigateToDoc', handleNavigateToDoc);
+  }, []);
 
   // Get first available document ID for initial selection
   const getFirstDocId = useMemo(() => {

@@ -39,8 +39,8 @@ export const useAllDocs = () => {
       console.log('✅ ALL DOCS FETCHED');
       return result;
     },
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
+    staleTime: Infinity,
+    gcTime: Infinity,
   });
 };
 
@@ -58,3 +58,4 @@ export const useDocById = (docId) => {
     gcTime: 30 * 60 * 1000,
   });
 };
+

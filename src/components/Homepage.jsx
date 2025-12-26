@@ -1,8 +1,10 @@
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useEffect } from 'react';
 import { formatBranchName } from '../utils/formatBranchName';
 import { ErrorDisplay } from './Loader';
 import { useApp } from '../context/AppContext';
+import { sidebarCache } from '../utils/sidebarIndexCache';
 import logoImg from '../assets/images/Logo.png';
 import vectorSvg from '../assets/svg/Vector.svg';
 import vector1Svg from '../assets/svg/Vector-1.svg';
@@ -18,6 +20,11 @@ import MobileMenu from './MobileMenu';
 const Homepage = () => {
   const navigate = useNavigate();
   const { openChat, repositories, repositoriesLoading: loading, repositoriesError: error } = useApp();
+
+  // Initialize sidebar cache on mount
+  useEffect(() => {
+    sidebarCache.initialize();
+  }, []);
 
   // Bold Metallic colors for cards
   const cardColors = [
