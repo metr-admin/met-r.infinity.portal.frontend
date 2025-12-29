@@ -61,7 +61,7 @@ const MobileMenu = () => {
                   >
                     Modules
                   </motion.a>
-                  <motion.a
+                  {/* <motion.a
                     whileHover={{ x: 5 }}
                     href="https://metapercept.com/"
                     target="_blank"
@@ -70,7 +70,7 @@ const MobileMenu = () => {
                     onClick={toggleMenu}
                   >
                     About
-                  </motion.a>
+                  </motion.a> */}
                 </nav>
               </div>
             </motion.div>

@@ -1,15 +1,23 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import logoImg from '../../assets/images/Logo.png';
 import aiSearchIcon from '../../assets/svg/ai search.png';
 import { formatBranchName } from '../../utils/formatBranchName';
 import { useApp } from '../../context/AppContext';
+import { useSearch } from '../../context/SearchContext';
+import SearchResults from './SearchResults';
+import MobileSearchModal from './MobileSearchModal';
 
-const Header = ({ currentDoc, sidebarOpen, setSidebarOpen }) => {
+const Header = ({ currentDoc, sidebarOpen, setSidebarOpen, allDocs, onDocSelect }) => {
   const navigate = useNavigate();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
   const { openChat, repositories } = useApp();
+  const { searchQuery, setSearchQuery, searchResults, isSearching, searchDocuments, clearSearch, highlightSearchTerm } = useSearch();
+  const searchInputRef = useRef(null);
+  const searchContainerRef = useRef(null);
   const modules = repositories;
   const currentBranch = currentDoc?.attributes?.branch;
   const domain = formatBranchName(currentBranch)?.toLowerCase() || 'general';
@@ -17,6 +25,80 @@ const Header = ({ currentDoc, sidebarOpen, setSidebarOpen }) => {
   const handleModuleChange = (branchName) => {
     navigate(`/documentation/${branchName}`);
     setShowDropdown(false);
+  };
+
+  // Handle search input changes
+  const handleSearchChange = (e) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    
+    if (query.trim()) {
+      const results = searchDocuments(query, allDocs);
+      setShowSearchResults(results.length > 0);
+    } else {
+      setShowSearchResults(false);
+    }
+  };
+
+  // Handle search result selection
+  const handleSearchResultClick = (doc) => {
+    if (onDocSelect) {
+      onDocSelect(doc.id);
+    }
+    setShowSearchResults(false);
+    setSearchQuery('');
+  };
+
+  // Handle search input focus
+  const handleSearchFocus = () => {
+    if (searchQuery.trim() && searchResults.length > 0) {
+      setShowSearchResults(true);
+    }
+  };
+
+  // Handle click outside search to close results
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target)) {
+        setShowSearchResults(false);
+      }
+    };
+
+    // Handle keyboard shortcuts
+    const handleKeyDown = (event) => {
+      // Ctrl/Cmd + K to focus search
+      if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
+        event.preventDefault();
+        if (window.innerWidth >= 640) { // sm breakpoint
+          searchInputRef.current?.focus();
+        } else {
+          setShowMobileSearch(true);
+        }
+      }
+      
+      // Escape to close search results
+      if (event.key === 'Escape') {
+        setShowSearchResults(false);
+        setShowMobileSearch(false);
+        searchInputRef.current?.blur();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
+  // Handle search form submission
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim() && searchResults.length > 0) {
+      handleSearchResultClick(searchResults[0].doc);
+    }
   };
 
   return (
@@ -80,50 +162,105 @@ const Header = ({ currentDoc, sidebarOpen, setSidebarOpen }) => {
         </div>
 
         {/* Search - responsive */}
-        <div className="relative hidden sm:block">
-          <div className="flex items-center w-32 sm:w-48 lg:w-96 h-[42px] border border-gray-200 rounded-lg bg-white hover:border-[#266EF6] transition-colors">
-            {/* Search Icon */}
-            <div className="pl-4 pr-2">
-              <svg fill="none" viewBox="0 0 16 16" className="w-4 h-4">
-                <path d="M14 14L11.1067 11.1067" stroke="#99A1AF" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round" />
-                <circle cx="7.33333" cy="7.33333" r="5.33333" stroke="#99A1AF" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </div>
-            
-            {/* Search Input */}
-            <input
-              type="text"
-              placeholder="Search documentation..."
-              className="flex-1 h-full bg-transparent border-none outline-none text-sm placeholder-gray-500 pr-2"
-            />
-            
-            {/* AI Mode Button */}
-            <button 
-              onClick={() => openChat(domain)}
-              className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs rounded-md border border-gray-300 transition-colors flex items-center gap-1 mr-2"
-            >
-              <img 
-                src={aiSearchIcon} 
-                alt="AI" 
-                className="w-3 h-3"
+        <div className="relative hidden sm:block" ref={searchContainerRef}>
+          <form onSubmit={handleSearchSubmit}>
+            <div className="flex items-center w-32 sm:w-48 lg:w-96 h-[42px] border border-gray-200 rounded-lg bg-white hover:border-[#266EF6] transition-colors">
+              {/* Search Icon */}
+              <div className="pl-4 pr-2">
+                <svg fill="none" viewBox="0 0 16 16" className="w-4 h-4">
+                  <path d="M14 14L11.1067 11.1067" stroke="#99A1AF" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round" />
+                  <circle cx="7.33333" cy="7.33333" r="5.33333" stroke="#99A1AF" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+              
+              {/* Search Input */}
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={handleSearchChange}
+                onFocus={handleSearchFocus}
+                placeholder="Search documentation... (⌘K)"
+                className="flex-1 h-full bg-transparent border-none outline-none text-sm placeholder-gray-500 pr-2"
               />
-              AI Mode
-            </button>
-          </div>
+              
+              {/* Clear Search Button */}
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    clearSearch();
+                    setShowSearchResults(false);
+                  }}
+                  className="px-2 py-1 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+              
+              {/* AI Mode Button */}
+              <button 
+                type="button"
+                onClick={() => openChat(domain)}
+                className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs rounded-md border border-gray-300 transition-colors flex items-center gap-1 mr-2"
+              >
+                <img 
+                  src={aiSearchIcon} 
+                  alt="AI" 
+                  className="w-3 h-3"
+                />
+                AI Mode
+              </button>
+            </div>
+          </form>
+          
+          {/* Search Results Dropdown */}
+          <SearchResults
+            results={searchResults.slice(0, 5)}
+            isVisible={showSearchResults}
+            onResultClick={handleSearchResultClick}
+            onClose={() => setShowSearchResults(false)}
+            highlightSearchTerm={highlightSearchTerm}
+            searchQuery={searchQuery}
+            isSearching={isSearching}
+          />
         </div>
 
         {/* Mobile search icon */}
-        <button 
-          onClick={() => openChat(domain)}
-          className="sm:hidden p-2 rounded-md hover:bg-gray-100 flex items-center gap-1"
-        >
-          <img 
-            src={aiSearchIcon} 
-            alt="AI Search" 
-            className="w-5 h-5"
-          />
-        </button>
+        <div className="sm:hidden flex items-center gap-2">
+          <button 
+            onClick={() => setShowMobileSearch(true)}
+            className="p-2 rounded-md hover:bg-gray-100 flex items-center gap-1"
+          >
+            <svg fill="none" viewBox="0 0 16 16" className="w-5 h-5">
+              <path d="M14 14L11.1067 11.1067" stroke="currentColor" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round" />
+              <circle cx="7.33333" cy="7.33333" r="5.33333" stroke="currentColor" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          <button 
+            onClick={() => openChat(domain)}
+            className="p-2 rounded-md hover:bg-gray-100 flex items-center gap-1"
+          >
+            <img 
+              src={aiSearchIcon} 
+              alt="AI Search" 
+              className="w-5 h-5"
+            />
+          </button>
+        </div>
       </div>
+      
+      {/* Mobile Search Modal */}
+      <MobileSearchModal
+        isOpen={showMobileSearch}
+        onClose={() => setShowMobileSearch(false)}
+        allDocs={allDocs}
+        onDocSelect={onDocSelect}
+        domain={domain}
+        openChat={openChat}
+      />
     </header>
   );
 };

@@ -9,6 +9,7 @@ import { PageLoader, ErrorDisplay } from './Loader';
 import { useDocsByRepository, useAllDocs, useDocById } from '../hooks/useDocumentation';
 import { processDocumentHierarchy } from '../utils/hierarchyProcessor';
 import { sidebarCache } from '../utils/sidebarIndexCache';
+import { SearchProvider } from '../context/SearchContext';
 
 const Documentation = () => {
   const { branchName } = useParams();
@@ -115,33 +116,41 @@ const Documentation = () => {
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
-      className="min-h-screen w-full bg-[#fbf8f8] overflow-x-hidden"
-    >
-      <div className="bg-[#fbf8f8] relative min-h-screen w-full max-w-[1440px] mx-auto">
-        <Header currentDoc={currentDoc} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-        <div className="flex relative min-h-0">
-          <Sidebar
-            allDocs={allDocs}
-            hierarchicalDocs={hierarchicalDocs}
-            currentDoc={currentDoc}
-            onDocSelect={handleDocSelect}
-            sidebarOpen={sidebarOpen}
-            setSidebarOpen={setSidebarOpen}
-          />
-          <MainContent 
+    <SearchProvider>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+        className="min-h-screen w-full bg-[#fbf8f8] overflow-x-hidden"
+      >
+        <div className="bg-[#fbf8f8] relative min-h-screen w-full max-w-[1440px] mx-auto">
+          <Header 
             currentDoc={currentDoc} 
-            allDocs={allDocs} 
+            sidebarOpen={sidebarOpen} 
+            setSidebarOpen={setSidebarOpen}
+            allDocs={allDocs}
             onDocSelect={handleDocSelect}
-            hierarchicalDocs={hierarchicalDocs}
           />
+          <div className="flex relative min-h-0">
+            <Sidebar
+              allDocs={allDocs}
+              hierarchicalDocs={hierarchicalDocs}
+              currentDoc={currentDoc}
+              onDocSelect={handleDocSelect}
+              sidebarOpen={sidebarOpen}
+              setSidebarOpen={setSidebarOpen}
+            />
+            <MainContent 
+              currentDoc={currentDoc} 
+              allDocs={allDocs} 
+              onDocSelect={handleDocSelect}
+              hierarchicalDocs={hierarchicalDocs}
+            />
+          </div>
+          <Footer />
         </div>
-        <Footer />
-      </div>
-    </motion.div>
+      </motion.div>
+    </SearchProvider>
   );
 };
 

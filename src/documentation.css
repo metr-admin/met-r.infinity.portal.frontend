@@ -3,6 +3,31 @@
   @apply text-base leading-relaxed;
 }
 
+/* Search highlighting */
+.documentation-content mark {
+  @apply bg-yellow-200 px-1 rounded;
+  animation: highlight-pulse 2s ease-in-out;
+}
+
+@keyframes highlight-pulse {
+  0% { background-color: #fef08a; }
+  50% { background-color: #fde047; }
+  100% { background-color: #fef08a; }
+}
+
+/* Search results dropdown styling */
+.search-results-dropdown {
+  @apply absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto;
+}
+
+.search-result-item {
+  @apply w-full text-left p-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-b-0;
+}
+
+.search-result-item mark {
+  @apply bg-yellow-200 px-1 rounded;
+}
+
 /* Hide navigation elements that might slip through */
 .documentation-content nav,
 .documentation-content [role="toc"],

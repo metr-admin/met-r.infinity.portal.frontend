@@ -4,12 +4,14 @@ import StandardTable from './StandardTable';
 import { formatBranchName } from '../../utils/formatBranchName';
 import { createContentProcessor } from '../../config/contentConfig';
 import { createNavigationUtils } from '../../config/navigationConfig';
+import { useSearch } from '../../context/SearchContext';
 
 const MainContent = ({ currentDoc, allDocs, onDocSelect, hierarchicalDocs }) => {
   const { branchName } = useParams();
   const navigate = useNavigate();
   const [headings, setHeadings] = useState([]);
   const [activeHeading, setActiveHeading] = useState('');
+  const { highlightedText, highlightSearchTerm } = useSearch();
   
   // Initialize configurable processors (memoized to prevent re-creation)
   const contentProcessor = React.useMemo(() => createContentProcessor(), []);
@@ -145,6 +147,34 @@ const MainContent = ({ currentDoc, allDocs, onDocSelect, hierarchicalDocs }) => 
     
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = htmlContent;
+    
+    // Apply search highlighting if there's a search term
+    if (highlightedText) {
+      const walker = document.createTreeWalker(
+        tempDiv,
+        NodeFilter.SHOW_TEXT,
+        null,
+        false
+      );
+      
+      const textNodes = [];
+      let node;
+      while (node = walker.nextNode()) {
+        textNodes.push(node);
+      }
+      
+      textNodes.forEach(textNode => {
+        const parent = textNode.parentNode;
+        if (parent && parent.tagName !== 'SCRIPT' && parent.tagName !== 'STYLE') {
+          const highlightedContent = highlightSearchTerm(textNode.textContent, highlightedText);
+          if (highlightedContent !== textNode.textContent) {
+            const span = document.createElement('span');
+            span.innerHTML = highlightedContent;
+            parent.replaceChild(span, textNode);
+          }
+        }
+      });
+    }
     
     // Style all ul elements
     const ulElements = tempDiv.querySelectorAll('ul');

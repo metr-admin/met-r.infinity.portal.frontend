@@ -89,14 +89,14 @@ const Homepage = () => {
                 >
                   Modules
                 </a>
-                <a 
+                {/* <a 
                   href="https://metapercept.com/" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="font-semibold text-lg text-[#3d3e3f] hover:text-[#266EF6] transition-colors duration-200"
                 >
                   About
-                </a>
+                </a> */}
               </nav>
               
               {/* Mobile Menu Button Placeholder */}
@@ -233,10 +233,10 @@ const Homepage = () => {
                   <div className="flex flex-wrap items-center gap-1 text-base text-gray-700">
                     <a href="https://metapercept.com/" target="_blank"  className="hover:text-[#266EF6] transition-colors">Metapercept.com</a>
                     <span className="mx-2 text-gray-400">/</span>
-                    <a href="#" className="hover:text-[#266EF6] transition-colors">Legal</a>
+                    {/* <a href="#" className="hover:text-[#266EF6] transition-colors">Legal</a>
                     <span className="mx-2 text-gray-400">/</span>
                     <a href="#" className="hover:text-[#266EF6] transition-colors">Feedback</a>
-                    <span className="mx-2 text-gray-400">/</span>
+                    <span className="mx-2 text-gray-400">/</span> */}
                     <a href="https://metapercept.com/contact" target="_blank" className="hover:text-[#266EF6] transition-colors">Contact Support</a>
                   </div>
                 </div>
