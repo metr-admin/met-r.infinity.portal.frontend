@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
 
 const SearchContext = createContext();
 
@@ -15,107 +15,107 @@ export const SearchProvider = ({ children }) => {
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [highlightedText, setHighlightedText] = useState('');
+  const debounceTimerRef = useRef(null);
 
-  // Search through documents
   const searchDocuments = useCallback((query, allDocs) => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
     if (!query.trim() || !allDocs) {
       setSearchResults([]);
       setHighlightedText('');
+      setIsSearching(false);
       return [];
     }
 
     setIsSearching(true);
-    const searchTerm = query.toLowerCase().trim();
-    const results = [];
 
-    allDocs.forEach(doc => {
-      const attributes = doc.attributes || {};
-      const content = attributes.htmlContent || attributes.content || attributes.bodyContent || '';
-      const title = attributes.htmlTitle || attributes.title || '';
-      
-      // Create a temporary div to parse HTML content
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = content;
-      
-      // Extract text content and headings
-      const textContent = tempDiv.textContent || tempDiv.innerText || '';
-      const headings = Array.from(tempDiv.querySelectorAll('h1, h2, h3, h4, h5, h6'))
-        .map(h => h.textContent || h.innerText || '');
-      
-      // Search in title
-      const titleMatch = title.toLowerCase().includes(searchTerm);
-      
-      // Search in headings
-      const headingMatches = headings.filter(heading => 
-        heading.toLowerCase().includes(searchTerm)
-      );
-      
-      // Search in content
-      const contentMatch = textContent.toLowerCase().includes(searchTerm);
-      
-      if (titleMatch || headingMatches.length > 0 || contentMatch) {
-        // Extract context around matches
-        const contexts = [];
+    debounceTimerRef.current = setTimeout(() => {
+      const searchTerm = query.toLowerCase().trim();
+      const results = [];
+
+      allDocs.forEach(doc => {
+        const attributes = doc.attributes || {};
+        const content = attributes.htmlContent || attributes.content || attributes.bodyContent || '';
+        const title = attributes.htmlTitle || attributes.title || '';
         
-        if (titleMatch) {
-          contexts.push({
-            type: 'title',
-            text: title,
-            highlight: searchTerm
-          });
-        }
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = content;
         
-        headingMatches.forEach(heading => {
-          contexts.push({
-            type: 'heading',
-            text: heading,
-            highlight: searchTerm
-          });
-        });
+        const textContent = tempDiv.textContent || tempDiv.innerText || '';
+        const headings = Array.from(tempDiv.querySelectorAll('h1, h2, h3, h4, h5, h6'))
+          .map(h => h.textContent || h.innerText || '');
         
-        if (contentMatch) {
-          const sentences = textContent.split(/[.!?]+/);
-          const matchingSentences = sentences.filter(sentence => 
-            sentence.toLowerCase().includes(searchTerm)
-          ).slice(0, 2); // Limit to 2 context sentences
+        const titleMatch = title.toLowerCase().includes(searchTerm);
+        const headingMatches = headings.filter(heading => 
+          heading.toLowerCase().includes(searchTerm)
+        );
+        const contentMatch = textContent.toLowerCase().includes(searchTerm);
+        
+        if (titleMatch || headingMatches.length > 0 || contentMatch) {
+          const contexts = [];
           
-          matchingSentences.forEach(sentence => {
+          if (titleMatch) {
             contexts.push({
-              type: 'content',
-              text: sentence.trim(),
+              type: 'title',
+              text: title,
+              highlight: searchTerm
+            });
+          }
+          
+          headingMatches.forEach(heading => {
+            contexts.push({
+              type: 'heading',
+              text: heading,
               highlight: searchTerm
             });
           });
+          
+          if (contentMatch) {
+            const sentences = textContent.split(/[.!?]+/);
+            const matchingSentences = sentences.filter(sentence => 
+              sentence.toLowerCase().includes(searchTerm)
+            ).slice(0, 2);
+            
+            matchingSentences.forEach(sentence => {
+              contexts.push({
+                type: 'content',
+                text: sentence.trim(),
+                highlight: searchTerm
+              });
+            });
+          }
+          
+          results.push({
+            doc,
+            title,
+            contexts,
+            relevance: titleMatch ? 3 : (headingMatches.length > 0 ? 2 : 1)
+          });
         }
-        
-        results.push({
-          doc,
-          title,
-          contexts,
-          relevance: titleMatch ? 3 : (headingMatches.length > 0 ? 2 : 1)
-        });
-      }
-    });
+      });
+
+      results.sort((a, b) => b.relevance - a.relevance);
+      
+      setSearchResults(results);
+      setHighlightedText(searchTerm);
+      setIsSearching(false);
+    }, 150);
     
-    // Sort by relevance
-    results.sort((a, b) => b.relevance - a.relevance);
-    
-    setSearchResults(results);
-    setHighlightedText(searchTerm);
-    setIsSearching(false);
-    
-    return results;
+    return [];
   }, []);
 
-  // Clear search
   const clearSearch = useCallback(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
     setSearchQuery('');
     setSearchResults([]);
     setHighlightedText('');
     setIsSearching(false);
   }, []);
 
-  // Highlight text in content
   const highlightSearchTerm = useCallback((text, term) => {
     if (!term || !text) return text;
     

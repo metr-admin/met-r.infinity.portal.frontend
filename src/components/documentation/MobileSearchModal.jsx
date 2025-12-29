@@ -4,7 +4,7 @@ import { useSearch } from '../../context/SearchContext';
 import SearchResults from './SearchResults';
 
 const MobileSearchModal = ({ isOpen, onClose, allDocs, onDocSelect, domain, openChat }) => {
-  const { searchQuery, setSearchQuery, searchResults, searchDocuments, clearSearch, highlightSearchTerm } = useSearch();
+  const { searchQuery, setSearchQuery, searchResults, isSearching, searchDocuments, clearSearch, highlightSearchTerm } = useSearch();
   const [showSearchResults, setShowSearchResults] = useState(false);
   const searchInputRef = useRef(null);
 
@@ -23,9 +23,10 @@ const MobileSearchModal = ({ isOpen, onClose, allDocs, onDocSelect, domain, open
     setSearchQuery(query);
     
     if (query.trim()) {
-      const results = searchDocuments(query, allDocs);
-      setShowSearchResults(results.length > 0);
+      searchDocuments(query, allDocs);
+      setShowSearchResults(true);
     } else {
+      clearSearch();
       setShowSearchResults(false);
     }
   };
@@ -35,8 +36,8 @@ const MobileSearchModal = ({ isOpen, onClose, allDocs, onDocSelect, domain, open
     if (onDocSelect) {
       onDocSelect(doc.id);
     }
+    clearSearch();
     setShowSearchResults(false);
-    setSearchQuery('');
     onClose();
   };
 
@@ -90,10 +91,14 @@ const MobileSearchModal = ({ isOpen, onClose, allDocs, onDocSelect, domain, open
             <form onSubmit={handleSearchSubmit}>
               <div className="flex items-center border border-gray-200 rounded-lg bg-white hover:border-blue-500 transition-colors">
                 <div className="pl-4 pr-2">
-                  <svg fill="none" viewBox="0 0 16 16" className="w-4 h-4">
-                    <path d="M14 14L11.1067 11.1067" stroke="#99A1AF" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round" />
-                    <circle cx="7.33333" cy="7.33333" r="5.33333" stroke="#99A1AF" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
+                  {isSearching ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                  ) : (
+                    <svg fill="none" viewBox="0 0 16 16" className="w-4 h-4">
+                      <path d="M14 14L11.1067 11.1067" stroke="#99A1AF" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round" />
+                      <circle cx="7.33333" cy="7.33333" r="5.33333" stroke="#99A1AF" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
                 </div>
                 
                 <input

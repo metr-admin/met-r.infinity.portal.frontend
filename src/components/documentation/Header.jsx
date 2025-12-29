@@ -33,9 +33,11 @@ const Header = ({ currentDoc, sidebarOpen, setSidebarOpen, allDocs, onDocSelect 
     setSearchQuery(query);
     
     if (query.trim()) {
-      const results = searchDocuments(query, allDocs);
-      setShowSearchResults(results.length > 0);
+      searchDocuments(query, allDocs);
+      // Keep dropdown open while searching
+      setShowSearchResults(true);
     } else {
+      clearSearch();
       setShowSearchResults(false);
     }
   };
@@ -45,13 +47,13 @@ const Header = ({ currentDoc, sidebarOpen, setSidebarOpen, allDocs, onDocSelect 
     if (onDocSelect) {
       onDocSelect(doc.id);
     }
+    clearSearch();
     setShowSearchResults(false);
-    setSearchQuery('');
   };
 
   // Handle search input focus
   const handleSearchFocus = () => {
-    if (searchQuery.trim() && searchResults.length > 0) {
+    if (searchQuery.trim() && searchResults.length > 0 && !isSearching) {
       setShowSearchResults(true);
     }
   };
@@ -165,12 +167,16 @@ const Header = ({ currentDoc, sidebarOpen, setSidebarOpen, allDocs, onDocSelect 
         <div className="relative hidden sm:block" ref={searchContainerRef}>
           <form onSubmit={handleSearchSubmit}>
             <div className="flex items-center w-32 sm:w-48 lg:w-96 h-[42px] border border-gray-200 rounded-lg bg-white hover:border-[#266EF6] transition-colors">
-              {/* Search Icon */}
+              {/* Search Icon or Loading Spinner */}
               <div className="pl-4 pr-2">
-                <svg fill="none" viewBox="0 0 16 16" className="w-4 h-4">
-                  <path d="M14 14L11.1067 11.1067" stroke="#99A1AF" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round" />
-                  <circle cx="7.33333" cy="7.33333" r="5.33333" stroke="#99A1AF" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                {isSearching ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                ) : (
+                  <svg fill="none" viewBox="0 0 16 16" className="w-4 h-4">
+                    <path d="M14 14L11.1067 11.1067" stroke="#99A1AF" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round" />
+                    <circle cx="7.33333" cy="7.33333" r="5.33333" stroke="#99A1AF" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
               </div>
               
               {/* Search Input */}
