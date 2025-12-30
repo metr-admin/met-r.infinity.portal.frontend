@@ -22,14 +22,20 @@ const Documentation = () => {
 
   const allDocs = docsData?.data || [];
   
+  // Reset selected doc when branch changes
+  useEffect(() => {
+    setSelectedDocId(null);
+  }, [branchName]);
+  
   // Process documents into hierarchical structure
   const hierarchicalDocs = useMemo(() => {
     return processDocumentHierarchy(allDocs);
   }, [allDocs]);
 
-  // Initialize sidebar cache on mount
+  // Initialize sidebar cache on mount and expose globally
   useEffect(() => {
     sidebarCache.initialize();
+    window.sidebarCache = sidebarCache; // Expose for ChatModal
   }, []);
 
   // Listen for navigation events from ChatModal
@@ -38,20 +44,24 @@ const Documentation = () => {
       const { filepath } = event.detail;
       if (filepath && sidebarCache.isReady()) {
         const docId = sidebarCache.getDocIdByFilepath(filepath);
+        const branch = sidebarCache.getBranchByFilepath(filepath);
+        
+        console.log('🔍 Navigation attempt:', { filepath, docId, branch, currentBranch: branchName });
         
         if (docId) {
-          console.log('🎯 Found doc ID:', docId, 'for filepath:', filepath);
-          setSelectedDocId(docId);
+          console.log('🎯 Found doc ID:', docId);
+          setTimeout(() => {
+            setSelectedDocId(docId);
+          }, 200);
         } else {
           console.warn('⚠️ No doc found for filepath:', filepath);
-          console.log('Available mappings:', Object.keys(sidebarCache.getAllMappings()).slice(0, 10));
         }
       }
     };
 
     window.addEventListener('navigateToDoc', handleNavigateToDoc);
     return () => window.removeEventListener('navigateToDoc', handleNavigateToDoc);
-  }, []);
+  }, [branchName]);
 
   // Get first available document ID for initial selection
   const getFirstDocId = useMemo(() => {

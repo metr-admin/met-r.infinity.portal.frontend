@@ -5,9 +5,9 @@ export const parseNavigationStructure = (htmlContent) => {
   try {
     const parser = new DOMParser();
     const doc = parser.parseFromString(htmlContent, 'text/html');
-    
+
     console.log('🔍 Parsing HTML content for navigation...');
-    
+
     // Look for navigation elements - common patterns in documentation
     const navSelectors = [
       'nav ul',
@@ -39,7 +39,7 @@ export const parseNavigationStructure = (htmlContent) => {
       console.log('🔍 Looking for any UL with links...');
       const allUls = doc.querySelectorAll('ul');
       console.log(`Found ${allUls.length} UL elements`);
-      
+
       for (const ul of allUls) {
         const links = ul.querySelectorAll('a');
         console.log(`UL has ${links.length} links`);
@@ -70,17 +70,17 @@ export const parseNavigationStructure = (htmlContent) => {
 const parseHeadingStructure = (doc) => {
   const headings = doc.querySelectorAll('h1, h2, h3, h4, h5, h6');
   console.log(`Found ${headings.length} headings`);
-  
+
   if (headings.length === 0) return [];
-  
+
   const structure = [];
   const stack = [];
-  
+
   headings.forEach((heading, index) => {
     const level = parseInt(heading.tagName.charAt(1));
     const title = heading.textContent.trim();
     const id = heading.id || `heading-${index}`;
-    
+
     const item = {
       id: generateId(),
       title,
@@ -89,21 +89,21 @@ const parseHeadingStructure = (doc) => {
       children: [],
       level
     };
-    
+
     // Find the right parent based on heading level
     while (stack.length > 0 && stack[stack.length - 1].level >= level) {
       stack.pop();
     }
-    
+
     if (stack.length === 0) {
       structure.push(item);
     } else {
       stack[stack.length - 1].children.push(item);
     }
-    
+
     stack.push(item);
   });
-  
+
   console.log('📋 Built structure from headings:', structure);
   return structure;
 };
@@ -125,7 +125,7 @@ const parseUlElement = (ulElement) => {
 const parseLiElement = (liElement) => {
   const link = liElement.querySelector('a');
   const nestedUl = liElement.querySelector('ul');
-  
+
   if (!link && !nestedUl) return null;
 
   const item = {
@@ -155,7 +155,7 @@ export { createStructureFromDocuments };
 // Smart matching based on document content indexing with hierarchical context
 export const matchNavigationWithDocumentContent = async (navigationStructure, allDocs) => {
   console.log('🤖 Starting smart hierarchical matching...');
-  
+
   // Create document map with filename matching
   const docMap = new Map();
   allDocs.forEach(doc => {
@@ -167,29 +167,29 @@ export const matchNavigationWithDocumentContent = async (navigationStructure, al
       docMap.set(nameWithoutExt, doc);
     }
   });
-  
+
   console.log(`📄 Built document map for ${docMap.size} documents`);
-  
+
   // Recursively match navigation items with hierarchical context
   const matchItems = (items, parentContext = null) => {
     return items.map(item => {
       const matchedItem = { ...item };
-      
+
       // For parent items (documents), match by href to filename
       if (item.children && item.children.length > 0) {
         // This is a main document - match by href
         if (item.href) {
           const hrefPath = item.href.toLowerCase();
-          
+
           // Try to find document by href path
           let matchedDoc = null;
-          
+
           // Extract filename from href
           const fileName = hrefPath.split('/').pop();
           if (fileName) {
             matchedDoc = docMap.get(fileName) || docMap.get(fileName.replace('.html', ''));
           }
-          
+
           // If not found, try partial matching
           if (!matchedDoc) {
             for (const [key, doc] of docMap.entries()) {
@@ -199,11 +199,11 @@ export const matchNavigationWithDocumentContent = async (navigationStructure, al
               }
             }
           }
-          
+
           if (matchedDoc) {
             matchedItem.docId = matchedDoc.id;
             console.log(`✅ Matched parent "${item.title}" -> ${matchedDoc.attributes?.fileName}`);
-            
+
             // Match children with parent context
             matchedItem.children = matchItems(item.children, {
               docId: matchedDoc.id,
@@ -223,22 +223,22 @@ export const matchNavigationWithDocumentContent = async (navigationStructure, al
         // This is a child item (section) - use parent context
         if (parentContext && parentContext.docId) {
           matchedItem.docId = parentContext.docId;
-          
+
           // Add anchor from href if available
           if (item.href && item.href.includes('#')) {
             matchedItem.anchor = item.href.split('#')[1];
           }
-          
+
           console.log(`✅ Matched child "${item.title}" -> parent doc ${parentContext.docId} ${matchedItem.anchor ? '(anchor: ' + matchedItem.anchor + ')' : ''}`);
         } else {
           console.log(`⚠️ Child "${item.title}" has no parent context`);
         }
       }
-      
+
       return matchedItem;
     });
   };
-  
+
   return matchItems(navigationStructure);
 };
 
@@ -255,7 +255,7 @@ const matchItemWithDocs = (item, allDocs) => {
   } else if (!item.children?.length) {
     // Try multiple matching strategies for leaf items
     let matchedDoc = null;
-    
+
     // Strategy 1: Exact href match
     if (item.href) {
       matchedDoc = allDocs.find(doc => {
@@ -264,7 +264,7 @@ const matchItemWithDocs = (item, allDocs) => {
       });
       if (matchedDoc) console.log(`✅ Strategy 1: Exact href match for "${item.title}"`);
     }
-    
+
     // Strategy 2: Partial href match
     if (!matchedDoc && item.href) {
       matchedDoc = allDocs.find(doc => {
@@ -275,7 +275,7 @@ const matchItemWithDocs = (item, allDocs) => {
       });
       if (matchedDoc) console.log(`✅ Strategy 2: Partial href match for "${item.title}"`);
     }
-    
+
     // Strategy 3: Title matching with document titles
     if (!matchedDoc) {
       matchedDoc = allDocs.find(doc => {
@@ -285,7 +285,7 @@ const matchItemWithDocs = (item, allDocs) => {
       });
       if (matchedDoc) console.log(`✅ Strategy 3: Title match for "${item.title}"`);
     }
-    
+
     // Strategy 4: Fuzzy filename matching
     if (!matchedDoc) {
       matchedDoc = allDocs.find(doc => {
@@ -296,7 +296,7 @@ const matchItemWithDocs = (item, allDocs) => {
       });
       if (matchedDoc) console.log(`✅ Strategy 4: Fuzzy filename match for "${item.title}"`);
     }
-    
+
     if (matchedDoc) {
       matchedItem.docId = matchedDoc.id;
       console.log(`✅ Final match: "${item.title}" -> docId: ${matchedDoc.id} (${matchedDoc.attributes?.fileName})`);
@@ -322,20 +322,20 @@ const generateId = () => {
 // Create navigation structure from document list when no index file exists
 const createStructureFromDocuments = (allDocs) => {
   console.log('🏗️ Creating navigation structure from documents...');
-  
+
   const structure = [];
   const categories = {};
-  
+
   allDocs.forEach(doc => {
     const fileName = doc.attributes?.fileName || '';
     const title = doc.attributes?.htmlTitle || doc.attributes?.title || fileName.replace('.html', '');
-    
+
     // Skip index files
     if (fileName.toLowerCase().includes('index')) return;
-    
+
     // Try to categorize documents
     let category = 'Documents';
-    
+
     if (fileName.toLowerCase().includes('install')) category = 'Installation';
     else if (fileName.toLowerCase().includes('config')) category = 'Configuration';
     else if (fileName.toLowerCase().includes('api')) category = 'API Reference';
@@ -343,7 +343,7 @@ const createStructureFromDocuments = (allDocs) => {
     else if (fileName.toLowerCase().includes('tutorial')) category = 'Tutorials';
     else if (fileName.toLowerCase().includes('troubleshoot')) category = 'Troubleshooting';
     else if (fileName.toLowerCase().includes('faq')) category = 'FAQ';
-    
+
     if (!categories[category]) {
       categories[category] = {
         id: generateId(),
@@ -353,7 +353,7 @@ const createStructureFromDocuments = (allDocs) => {
         children: []
       };
     }
-    
+
     categories[category].children.push({
       id: generateId(),
       title: title,
@@ -361,15 +361,15 @@ const createStructureFromDocuments = (allDocs) => {
       docId: doc.id, // Ensure correct docId is set
       children: []
     });
-    
+
     console.log(`📄 Added "${title}" to "${category}" with docId: ${doc.id}`);
   });
-  
+
   // Convert categories to array
   Object.values(categories).forEach(category => {
     structure.push(category);
   });
-  
+
   console.log('📁 Created categorized structure with', structure.length, 'categories');
   return structure;
 };
@@ -377,17 +377,17 @@ const createStructureFromDocuments = (allDocs) => {
 // Debug function to log HTML structure
 export const debugHtmlStructure = (htmlContent) => {
   if (!htmlContent) return;
-  
+
   const parser = new DOMParser();
   const doc = parser.parseFromString(htmlContent, 'text/html');
-  
+
   console.log('🔍 HTML Structure Debug:');
   console.log('- UL elements:', doc.querySelectorAll('ul').length);
   console.log('- LI elements:', doc.querySelectorAll('li').length);
   console.log('- A elements:', doc.querySelectorAll('a').length);
   console.log('- Headings:', doc.querySelectorAll('h1,h2,h3,h4,h5,h6').length);
   console.log('- Nav elements:', doc.querySelectorAll('nav').length);
-  
+
   // Log first few UL elements
   const uls = doc.querySelectorAll('ul');
   uls.forEach((ul, i) => {

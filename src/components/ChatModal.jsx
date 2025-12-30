@@ -31,7 +31,16 @@ const ChatModal = ({ isOpen, onClose, domain = 'general' }) => {
   const handleDocumentView = (filepath) => {
     if (!filepath) return;
     onClose();
-    navigate(`/documentation`);
+    
+    // Get the branch for this document
+    const branch = window.sidebarCache?.getBranchByFilepath(filepath);
+    
+    if (branch) {
+      navigate(`/documentation/${branch}`);
+    } else {
+      navigate(`/documentation`);
+    }
+    
     setTimeout(() => {
       const event = new CustomEvent('navigateToDoc', { detail: { filepath } });
       window.dispatchEvent(event);
