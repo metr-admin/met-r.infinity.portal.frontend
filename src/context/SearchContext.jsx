@@ -37,8 +37,18 @@ export const SearchProvider = ({ children }) => {
 
       allDocs.forEach(doc => {
         const attributes = doc.attributes || {};
-        const content = attributes.htmlContent || attributes.content || attributes.bodyContent || '';
+        const fileName = attributes.fileName || '';
         const title = attributes.htmlTitle || attributes.title || '';
+        
+        // Skip index/map files
+        const isIndexFile = fileName.toLowerCase().includes('index') || 
+                           fileName.toLowerCase().includes('map') ||
+                           title.toLowerCase().includes('index') ||
+                           title.toLowerCase().endsWith('map');
+        
+        if (isIndexFile) return;
+        
+        const content = attributes.htmlContent || attributes.content || attributes.bodyContent || '';
         
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = content;
@@ -119,7 +129,8 @@ export const SearchProvider = ({ children }) => {
   const highlightSearchTerm = useCallback((text, term) => {
     if (!term || !text) return text;
     
-    const regex = new RegExp(`(${term})`, 'gi');
+    const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`(${escapedTerm})`, 'gi');
     return text.replace(regex, '<mark class="bg-yellow-200 px-1 rounded">$1</mark>');
   }, []);
 

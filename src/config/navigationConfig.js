@@ -34,23 +34,31 @@ export const createNavigationUtils = (config = NAVIGATION_CONFIG) => {
   return {
     // Generate breadcrumb items
     generateBreadcrumb: (branchName, currentTitle, formatBranchName, navigate) => {
-      return [
+      const breadcrumbs = [
         {
           label: config.breadcrumb.homeLabel,
           onClick: () => navigate(config.routes.home),
           isActive: false
-        },
-        {
-          label: formatBranchName(branchName) || config.breadcrumb.fallbackLabel,
-          onClick: () => navigate(`${config.routes.documentation}/${branchName}`),
-          isActive: false
-        },
-        {
-          label: currentTitle || config.breadcrumb.fallbackPageLabel,
-          onClick: null,
-          isActive: true
         }
       ];
+
+      // Only add branch breadcrumb if branchName exists
+      if (branchName) {
+        breadcrumbs.push({
+          label: formatBranchName(branchName) || branchName,
+          onClick: () => navigate(`${config.routes.documentation}/${branchName}`),
+          isActive: false
+        });
+      }
+
+      // Add current page
+      breadcrumbs.push({
+        label: currentTitle || config.breadcrumb.fallbackPageLabel,
+        onClick: null,
+        isActive: true
+      });
+
+      return breadcrumbs;
     },
 
     // Find document using configured strategies

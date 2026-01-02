@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Header from './documentation/Header';
 import Sidebar from './documentation/Sidebar';
@@ -13,8 +13,16 @@ import { SearchProvider } from '../context/SearchContext';
 
 const Documentation = () => {
   const { branchName } = useParams();
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedDocId, setSelectedDocId] = useState(null);
+
+  // Redirect to home if no branchName
+  useEffect(() => {
+    if (!branchName) {
+      navigate('/', { replace: true });
+    }
+  }, [branchName, navigate]);
 
   const { data: docsData, isLoading: loading, error } = branchName
     ? useDocsByRepository(branchName)
@@ -84,6 +92,13 @@ const Documentation = () => {
     return findFirstDoc(hierarchicalDocs);
   }, [hierarchicalDocs]);
 
+  // Reset selectedDocId when branchName changes
+  useEffect(() => {
+    if (branchName) {
+      setSelectedDocId(null);
+    }
+  }, [branchName]);
+
   const docIdToFetch = selectedDocId || getFirstDocId;
   const { data: currentDocData } = useDocById(docIdToFetch);
   const currentDoc = currentDocData?.data;
@@ -112,6 +127,10 @@ const Documentation = () => {
       }, 100);
     }
   };
+
+  if (!branchName) {
+    return null;
+  }
 
   if (loading) {
     return <PageLoader />;

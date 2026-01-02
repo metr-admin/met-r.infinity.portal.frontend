@@ -125,7 +125,7 @@ const Header = ({ currentDoc, sidebarOpen, setSidebarOpen, allDocs, onDocSelect 
           </Link>
           <nav className="hidden lg:flex items-center gap-6">
             <Link to="/" className="text-[#364153] hover:text-[#266EF6] transition-colors">Home</Link>
-            <a href="#" className="text-[#364153] hover:text-[#266EF6] transition-colors">Contact</a>
+            {/* <a href="#" className="text-[#364153] hover:text-[#266EF6] transition-colors">Contact</a> */}
           </nav>
         </div>
 
