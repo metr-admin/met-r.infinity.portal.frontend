@@ -43,20 +43,21 @@ const Sidebar = ({ allDocs, hierarchicalDocs, currentDoc, onDocSelect, sidebarOp
     const isExpanded = expandedItems.has(item.id);
     const hasChildren = item.children && item.children.length > 0;
     const isActive = currentDoc?.id === item.docId;
-    const indentClass = level > 0 ? `ml-${level * 3}` : '';
+    const maxLevel = 4;
+    const effectiveLevel = Math.min(level, maxLevel);
     
     // Check if this is a section (child with anchor)
     const isSection = item.type === 'section' && item.anchor;
 
     if (item.type === 'category') {
       return (
-        <div key={item.id} className={indentClass}>
+        <div key={item.id} className="overflow-hidden">
           <button
             onClick={() => toggleExpanded(item.id)}
             className="flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors duration-150"
           >
             <svg 
-              className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} 
+              className={`w-4 h-4 flex-shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} 
               fill="none" 
               viewBox="0 0 24 24" 
               stroke="currentColor"
@@ -66,8 +67,8 @@ const Sidebar = ({ allDocs, hierarchicalDocs, currentDoc, onDocSelect, sidebarOp
             <span className="truncate">{item.title}</span>
           </button>
           {isExpanded && hasChildren && (
-            <div className="ml-2 mt-1 space-y-0.5 border-l border-gray-200 pl-3">
-              {item.children.map(child => renderNavItem(child, level + 1))}
+            <div className="ml-2 mt-1 space-y-0.5 border-l border-gray-200 pl-3 overflow-hidden">
+              {item.children.map(child => renderNavItem(child, effectiveLevel + 1))}
             </div>
           )}
         </div>
@@ -75,7 +76,7 @@ const Sidebar = ({ allDocs, hierarchicalDocs, currentDoc, onDocSelect, sidebarOp
     }
 
     return (
-      <div key={item.id} className={indentClass}>
+      <div key={item.id} className="overflow-hidden">
         <div className="flex items-center w-full group">
           <button
             onClick={(e) => {
@@ -84,7 +85,7 @@ const Sidebar = ({ allDocs, hierarchicalDocs, currentDoc, onDocSelect, sidebarOp
                 handleDocSelect(item.docId, item.anchor);
               }
             }}
-            className={`flex items-center gap-2 flex-1 px-3 py-2 text-sm font-medium transition-colors duration-150 ${
+            className={`flex items-center gap-2 flex-1 px-3 py-2 text-sm font-medium transition-colors duration-150 min-w-0 ${
               isActive 
                 ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-500' 
                 : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
@@ -99,7 +100,7 @@ const Sidebar = ({ allDocs, hierarchicalDocs, currentDoc, onDocSelect, sidebarOp
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             )}
-            <span className="flex-1 text-left pr-2">
+            <span className="flex-1 text-left break-words line-clamp-2">
               {item.displayTitle || item.title}
             </span>
           </button>
@@ -110,7 +111,7 @@ const Sidebar = ({ allDocs, hierarchicalDocs, currentDoc, onDocSelect, sidebarOp
                 e.stopPropagation();
                 toggleExpanded(item.id);
               }}
-              className={`px-2 py-2 rounded-r-md transition-colors duration-150 group-hover:bg-gray-50 ${
+              className={`px-2 py-2 flex-shrink-0 rounded-r-md transition-colors duration-150 group-hover:bg-gray-50 ${
                 isActive ? 'bg-blue-50 text-blue-600' : 'text-gray-400 hover:text-gray-600'
               }`}
             >
@@ -127,8 +128,8 @@ const Sidebar = ({ allDocs, hierarchicalDocs, currentDoc, onDocSelect, sidebarOp
         </div>
         
         {isExpanded && hasChildren && (
-          <div className="ml-4 mt-1 space-y-0.5 border-l border-gray-200 pl-3">
-            {item.children.map(child => renderNavItem(child, level + 1))}
+          <div className="ml-4 mt-1 space-y-0.5 border-l border-gray-200 pl-3 overflow-hidden">
+            {item.children.map(child => renderNavItem(child, effectiveLevel + 1))}
           </div>
         )}
       </div>

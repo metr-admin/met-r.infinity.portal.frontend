@@ -104,25 +104,25 @@ const Homepage = () => {
             </header>
 
             {/* Main Content */}
-            <div className="relative z-10 flex flex-col items-center justify-center text-center px-4 sm:px-6 mt-12 sm:mt-16 lg:mt-32">
-              <h1 className="font-bold text-3xl sm:text-4xl lg:text-6xl xl:text-[64px] text-[#3d3e3f] mb-4 sm:mb-6 leading-tight max-w-4xl">
+            <div className="relative z-10 flex flex-col items-center justify-center text-center px-4 sm:px-6 mt-8 sm:mt-12 lg:mt-24">
+              <h1 className="font-bold text-3xl sm:text-4xl lg:text-5xl xl:text-[56px] text-[#3d3e3f] mb-3 sm:mb-4 leading-tight max-w-4xl">
                 How can we help you
               </h1>
-              <p className="text-base sm:text-lg lg:text-2xl text-[#3d3e3f] mb-8 sm:mb-12 max-w-2xl px-4">
+              <p className="text-sm sm:text-base lg:text-xl text-[#3d3e3f] mb-6 sm:mb-8 max-w-2xl px-4">
                 Search here to get answers to your questions
               </p>
 
               {/* Search Bar */}
-              <div className="w-full max-w-md lg:max-w-2xl mb-6">
+              <div className="w-full max-w-md lg:max-w-xl mb-4">
                 <div 
                   onClick={() => openChat('general')}
-                  className="relative bg-white backdrop-blur-md rounded-full h-14 lg:h-16 flex items-center px-6 cursor-pointer hover:shadow-2xl transition-all duration-300 border-2 border-gray-300 hover:border-[#266EF6] group shadow-lg"
+                  className="relative bg-white backdrop-blur-md rounded-full h-12 lg:h-14 flex items-center px-4 lg:px-6 cursor-pointer hover:shadow-2xl transition-all duration-300 border-2 border-gray-300 hover:border-[#266EF6] group shadow-lg"
                 >
-                  <div className="flex items-center gap-4 text-gray-600 text-base lg:text-lg w-full">
+                  <div className="flex items-center gap-3 text-gray-600 text-sm lg:text-base w-full">
                     <img 
                       src={aiSearchIcon} 
                       alt="AI Search" 
-                      className="w-8 h-8 lg:w-10 lg:h-10 opacity-80 group-hover:opacity-100 transition-opacity duration-300 filter brightness-0 saturate-100"
+                      className="w-6 h-6 lg:w-8 lg:h-8 opacity-80 group-hover:opacity-100 transition-opacity duration-300 filter brightness-0 saturate-100 flex-shrink-0"
                     />
                     <span className="group-hover:text-[#266EF6] transition-colors duration-300">AI Search for the Documentation...</span>
                   </div>
@@ -149,11 +149,11 @@ const Homepage = () => {
 
             <div className="relative z-10 container mx-auto px-6">
               {/* Section Title */}
-              <div className="text-center mb-16 lg:mb-24">
-                <h2 className="font-bold text-3xl lg:text-5xl text-[#3d3e3f] mb-6">
+              <div className="text-center mb-12 lg:mb-16">
+                <h2 className="font-bold text-2xl lg:text-4xl text-[#3d3e3f] mb-4">
                   Infinity Modules
                 </h2>
-                <p className="text-lg lg:text-2xl text-[#3d3e3f] max-w-4xl mx-auto">
+                <p className="text-base lg:text-xl text-[#3d3e3f] max-w-3xl mx-auto px-4">
                   Loaded with awesome features like AI Search, Documentation,<br className="hidden lg:block" />
                   Knowledge base & more!
                 </p>
@@ -185,7 +185,7 @@ const Homepage = () => {
                 ) : error ? (
                   <ErrorDisplay message={error} onRetry={() => window.location.reload()} />
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12 relative z-10 max-w-6xl mx-auto">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 mb-12 relative z-10 max-w-6xl mx-auto px-4">
                     {repositories.slice(0, 9).map((repo, index) => {
                       const branchName = repo.attributes?.branch;
                       const displayName = formatBranchName(branchName);

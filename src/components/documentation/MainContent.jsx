@@ -5,12 +5,14 @@ import { formatBranchName } from '../../utils/formatBranchName';
 import { createContentProcessor } from '../../config/contentConfig';
 import { createNavigationUtils } from '../../config/navigationConfig';
 import { useSearch } from '../../context/SearchContext';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const MainContent = ({ currentDoc, allDocs, onDocSelect, hierarchicalDocs }) => {
   const { branchName } = useParams();
   const navigate = useNavigate();
   const [headings, setHeadings] = useState([]);
   const [activeHeading, setActiveHeading] = useState('');
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const { highlightedText, highlightSearchTerm } = useSearch();
   
   // Initialize configurable processors (memoized to prevent re-creation)
@@ -41,6 +43,16 @@ const MainContent = ({ currentDoc, allDocs, onDocSelect, hierarchicalDocs }) => 
     // Update SEO metadata
     updateSEOMetadata(currentDoc.attributes);
   }, [currentDoc]);
+
+  // Handle scroll to show/hide scroll to top button
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 300);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
   
   // Update page SEO metadata
   const updateSEOMetadata = (attributes) => {
@@ -396,7 +408,7 @@ const MainContent = ({ currentDoc, allDocs, onDocSelect, hierarchicalDocs }) => 
   const contentElements = renderStyledContent(processedContent);
   
   return (
-    <div className="flex-1 flex flex-col lg:flex-row bg-white min-w-0 overflow-hidden">
+    <div className="flex-1 flex flex-col lg:flex-row bg-white min-w-0 overflow-hidden relative">
       {/* Main Content */}
       <main className="flex-1 p-4 sm:p-6 lg:p-8 min-w-0 overflow-x-auto">
         {/* Breadcrumb */}
@@ -442,7 +454,7 @@ const MainContent = ({ currentDoc, allDocs, onDocSelect, hierarchicalDocs }) => 
           </div>
           
           {/* Next/Previous Navigation */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-gray-200">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-stretch gap-4 mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-gray-200 overflow-hidden">
             {(() => {
               if (!hierarchicalDocs || hierarchicalDocs.length === 0) return null;
               
@@ -450,16 +462,19 @@ const MainContent = ({ currentDoc, allDocs, onDocSelect, hierarchicalDocs }) => 
               
               return (
                 <>
-                  <div className="flex-1 w-full sm:w-auto">
+                  <div className="flex-1 w-full sm:w-auto sm:max-w-[45%]">
                     {prevDoc && (
                       <button
-                        onClick={() => onDocSelect(prevDoc.docId)}
-                        className="flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors group w-full sm:w-auto"
+                        onClick={() => {
+                          onDocSelect(prevDoc.docId);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        className="flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors group w-full"
                       >
                         <svg className="w-4 h-4 group-hover:-translate-x-1 transition-transform flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                         </svg>
-                        <div className="text-left min-w-0">
+                        <div className="text-left overflow-hidden">
                           <div className="text-xs text-gray-500 uppercase tracking-wider">Previous</div>
                           <div className="font-medium text-sm sm:text-base truncate">{prevDoc.displayTitle || prevDoc.title}</div>
                         </div>
@@ -467,13 +482,16 @@ const MainContent = ({ currentDoc, allDocs, onDocSelect, hierarchicalDocs }) => 
                     )}
                   </div>
                   
-                  <div className="flex-1 text-left sm:text-right w-full sm:w-auto">
+                  <div className="flex-1 text-left sm:text-right w-full sm:w-auto sm:max-w-[45%]">
                     {nextDoc && (
                       <button
-                        onClick={() => onDocSelect(nextDoc.docId)}
-                        className="flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors group ml-0 sm:ml-auto w-full sm:w-auto justify-start sm:justify-end"
+                        onClick={() => {
+                          onDocSelect(nextDoc.docId);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        className="flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors group ml-0 sm:ml-auto w-full justify-start sm:justify-end"
                       >
-                        <div className="text-left sm:text-right min-w-0 order-2 sm:order-1">
+                        <div className="text-left sm:text-right overflow-hidden order-2 sm:order-1">
                           <div className="text-xs text-gray-500 uppercase tracking-wider">Next</div>
                           <div className="font-medium text-sm sm:text-base truncate">{nextDoc.displayTitle || nextDoc.title}</div>
                         </div>
@@ -513,6 +531,25 @@ const MainContent = ({ currentDoc, allDocs, onDocSelect, hierarchicalDocs }) => 
           </nav>
         </aside>
       )}
+
+      {/* Scroll to Top Button */}
+      <AnimatePresence>
+        {showScrollTop && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.2 }}
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="fixed bottom-8 right-8 z-50 p-4 bg-gradient-to-r from-accent-blue to-accent-purple text-white rounded-full shadow-lg hover:shadow-xl hover:scale-110 transition-all"
+            aria-label="Scroll to top"
+          >
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+            </svg>
+          </motion.button>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

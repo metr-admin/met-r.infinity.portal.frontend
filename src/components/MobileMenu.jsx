@@ -40,14 +40,7 @@ const MobileMenu = () => {
               className="fixed top-0 right-0 w-64 h-full bg-white shadow-lg z-[99999]"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex flex-col p-6 space-y-6">
-                <button
-                  onClick={toggleMenu}
-                  className="self-end text-2xl text-[#3d3e3f] hover:text-accent-blue transition-colors"
-                  aria-label="Close menu"
-                >
-                  ×
-                </button>
+              <div className="flex flex-col p-6 space-y-6 pt-16">
                 <nav className="flex flex-col space-y-4">
                   <motion.a
                     whileHover={{ x: 5 }}
