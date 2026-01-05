@@ -175,11 +175,11 @@ jobs:
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH'
 
-      - name: Upload Trivy results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: 'trivy-results.sarif'
-        if: always()
+    #   - name: Upload Trivy results to GitHub Security
+    #     uses: github/codeql-action/upload-sarif@v3
+    #     with:
+    #       sarif_file: 'trivy-results.sarif'
+    #     if: always()
 
       - name: Run Trivy vulnerability scanner (JSON output)
         uses: aquasecurity/trivy-action@master
