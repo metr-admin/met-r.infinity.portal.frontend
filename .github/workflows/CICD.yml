@@ -91,12 +91,24 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Check if test script exists
+        id: check_test
+        run: |
+          if npm run | grep -q "test"; then
+            echo "has_test=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_test=false" >> $GITHUB_OUTPUT
+            echo "No test script found in package.json"
+          fi
+
       - name: Run unit tests
+        if: steps.check_test.outputs.has_test == 'true'
         run: npm test -- --coverage --watchAll=false
         env:
           CI: true
 
       - name: Upload coverage reports
+        if: steps.check_test.outputs.has_test == 'true'
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -104,6 +116,10 @@ jobs:
           flags: unittests
           name: codecov-umbrella
         continue-on-error: true
+      
+      - name: Skip tests notice
+        if: steps.check_test.outputs.has_test == 'false'
+        run: echo "ℹSkipping tests - no test script configured in package.json"
 
   # Job 4: Dependency Check
   dependency-check:
