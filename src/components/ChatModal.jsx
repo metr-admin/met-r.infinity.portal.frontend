@@ -50,6 +50,21 @@ const ChatModal = ({ isOpen, onClose, domain = 'general' }) => {
   useLinkHandler(messagesContainerRef.current);
 
   useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const handleDocLinkClick = (e) => {
+      if (e.target.classList.contains('doc-link')) {
+        const filepath = e.target.getAttribute('data-filepath');
+        if (filepath) handleDocumentView(filepath);
+      }
+    };
+
+    container.addEventListener('click', handleDocLinkClick);
+    return () => container.removeEventListener('click', handleDocLinkClick);
+  }, [messagesContainerRef.current]);
+
+  useEffect(() => {
     if (isOpen && !loading) {
       textareaRef.current?.focus();
     }
@@ -101,13 +116,33 @@ const ChatModal = ({ isOpen, onClose, domain = 'general' }) => {
       const data = await response.json();
       if (data.id) {
         setConversationId(data.id);
-        setMessages((data.messages || []).map(msg => ({
-          ...msg,
-          content: msg.role === 'assistant' ? marked.parse(msg.content) : msg.content,
-          message_id: msg.id,
-          feedback: msg.feedback,
-          supportingDocs: msg.supporting_documents || []
-        })));
+        const processedMessages = (data.messages || []).map(msg => {
+          if (msg.role === 'assistant') {
+            let htmlContent = marked.parse(msg.content);
+            // Replace <a> tags with .xml links to clickable spans
+            htmlContent = htmlContent.replace(
+              /<a href="([^"]*\.xml)"[^>]*>([^<]+)<\/a>/g,
+              (match, filepath, text) => {
+                const displayText = text.replace(/\.xml$/, '');
+                return `<span class="doc-link" data-filepath="${filepath}">${displayText}</span>`;
+              }
+            );
+            return {
+              ...msg,
+              content: htmlContent,
+              message_id: msg.id,
+              feedback: msg.feedback,
+              supportingDocs: msg.supporting_documents || []
+            };
+          }
+          return {
+            ...msg,
+            message_id: msg.id,
+            feedback: msg.feedback,
+            supportingDocs: msg.supporting_documents || []
+          };
+        });
+        setMessages(processedMessages);
       }
     } catch (error) {
       console.error('Error loading conversation:', error);
@@ -172,8 +207,18 @@ const ChatModal = ({ isOpen, onClose, domain = 'general' }) => {
     }
 
     const htmlContent = marked.parse(markdown);
+    
+    // Replace <a> tags with .xml links to clickable spans
+    const processedHtml = htmlContent.replace(
+      /<a href="([^"]*\.xml)"[^>]*>([^<]+)<\/a>/g,
+      (match, filepath, text) => {
+        const displayText = text.replace(/\.xml$/, '');
+        return `<span class="doc-link" data-filepath="${filepath}">${displayText}</span>`;
+      }
+    );
+    
     setMessages(prev => prev.map((msg, idx) =>
-      idx === prev.length - 1 ? { ...msg, content: htmlContent, supportingDocs } : msg
+      idx === prev.length - 1 ? { ...msg, content: processedHtml, supportingDocs } : msg
     ));
   };
 
