@@ -47,7 +47,6 @@ const Header = ({ currentDoc, sidebarOpen, setSidebarOpen, allDocs, onDocSelect 
     if (onDocSelect) {
       onDocSelect(doc.id);
     }
-    clearSearch();
     setShowSearchResults(false);
   };
 

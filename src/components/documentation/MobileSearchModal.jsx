@@ -36,7 +36,6 @@ const MobileSearchModal = ({ isOpen, onClose, allDocs, onDocSelect, domain, open
     if (onDocSelect) {
       onDocSelect(doc.id);
     }
-    clearSearch();
     setShowSearchResults(false);
     onClose();
   };

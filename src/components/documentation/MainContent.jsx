@@ -160,34 +160,6 @@ const MainContent = ({ currentDoc, allDocs, onDocSelect, hierarchicalDocs }) => 
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = htmlContent;
     
-    // Apply search highlighting if there's a search term
-    if (highlightedText) {
-      const walker = document.createTreeWalker(
-        tempDiv,
-        NodeFilter.SHOW_TEXT,
-        null,
-        false
-      );
-      
-      const textNodes = [];
-      let node;
-      while (node = walker.nextNode()) {
-        textNodes.push(node);
-      }
-      
-      textNodes.forEach(textNode => {
-        const parent = textNode.parentNode;
-        if (parent && parent.tagName !== 'SCRIPT' && parent.tagName !== 'STYLE') {
-          const highlightedContent = highlightSearchTerm(textNode.textContent, highlightedText);
-          if (highlightedContent !== textNode.textContent) {
-            const span = document.createElement('span');
-            span.innerHTML = highlightedContent;
-            parent.replaceChild(span, textNode);
-          }
-        }
-      });
-    }
-    
     // Style all ul elements
     const ulElements = tempDiv.querySelectorAll('ul');
     ulElements.forEach(ul => {
@@ -207,7 +179,7 @@ const MainContent = ({ currentDoc, allDocs, onDocSelect, hierarchicalDocs }) => 
     });
     
     // Style and assign IDs to headings based on text content
-    const headingElements = tempDiv.querySelectorAll('h2, h3');
+    const headingElements = tempDiv.querySelectorAll('h1, h2, h3, h4, h5, h6');
     const usedIds = new Set();
     
     headingElements.forEach((heading) => {
@@ -227,23 +199,19 @@ const MainContent = ({ currentDoc, allDocs, onDocSelect, hierarchicalDocs }) => 
       // Assign ID and styling
       heading.id = finalId;
       
-      if (level === 'h2') {
+      if (level === 'h1') {
+        heading.className = 'text-3xl font-bold text-gray-900 mt-8 mb-6 border-b border-gray-200 pb-3';
+      } else if (level === 'h2') {
         heading.className = 'text-2xl font-semibold text-gray-900 mt-8 mb-4 border-b border-gray-200 pb-2';
       } else if (level === 'h3') {
         heading.className = 'text-xl font-semibold text-gray-900 mt-6 mb-3';
+      } else if (level === 'h4') {
+        heading.className = 'text-lg font-semibold text-gray-900 mt-5 mb-2';
+      } else if (level === 'h5') {
+        heading.className = 'text-base font-semibold text-gray-900 mt-4 mb-2';
+      } else if (level === 'h6') {
+        heading.className = 'text-sm font-semibold text-gray-900 mt-3 mb-2';
       }
-    });
-    
-    // Style all h4 elements
-    const h4Elements = tempDiv.querySelectorAll('h4');
-    h4Elements.forEach(h4 => {
-      h4.className = 'text-lg font-semibold text-gray-900 mt-5 mb-2';
-    });
-    
-    // Style all h5 elements
-    const h5Elements = tempDiv.querySelectorAll('h5');
-    h5Elements.forEach(h5 => {
-      h5.className = 'text-base font-semibold text-gray-900 mt-4 mb-2';
     });
     
     // Style all p elements
@@ -363,10 +331,34 @@ const MainContent = ({ currentDoc, allDocs, onDocSelect, hierarchicalDocs }) => 
     
     const styledHtml = tempDiv.innerHTML;
     
+    // Apply search highlighting after all styling
+    if (highlightedText) {
+      const highlightDiv = document.createElement('div');
+      highlightDiv.innerHTML = styledHtml;
+      
+      const allElements = highlightDiv.querySelectorAll('*');
+      allElements.forEach(element => {
+        Array.from(element.childNodes).forEach(node => {
+          if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
+            const highlighted = highlightSearchTerm(node.textContent, highlightedText);
+            if (highlighted !== node.textContent) {
+              const span = document.createElement('span');
+              span.innerHTML = highlighted;
+              node.replaceWith(span);
+            }
+          }
+        });
+      });
+      
+      tempDiv.innerHTML = highlightDiv.innerHTML;
+    }
+    
+    const finalHtml = tempDiv.innerHTML;
+    
     // Split content by tables and render with StandardTable component
     const tableRegex = /<table[^>]*>[\s\S]*?<\/table>/gi;
-    const tables = styledHtml.match(tableRegex) || [];
-    const textParts = styledHtml.split(tableRegex);
+    const tables = finalHtml.match(tableRegex) || [];
+    const textParts = finalHtml.split(tableRegex);
     
     const elements = [];
     
@@ -441,7 +433,13 @@ const MainContent = ({ currentDoc, allDocs, onDocSelect, hierarchicalDocs }) => 
 
         {/* Page Title - Only show once here */}
         <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-[#101828] mb-6 sm:mb-8 border-b border-gray-200 pb-4">
-          {attributes?.htmlTitle || attributes?.title || 'Untitled Document'}
+          {highlightedText ? (
+            <span dangerouslySetInnerHTML={{ 
+              __html: highlightSearchTerm(attributes?.htmlTitle || attributes?.title || 'Untitled Document', highlightedText) 
+            }} />
+          ) : (
+            attributes?.htmlTitle || attributes?.title || 'Untitled Document'
+          )}
         </h1>
 
         {/* Document Content */}
