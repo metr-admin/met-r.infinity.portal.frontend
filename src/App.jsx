@@ -7,6 +7,8 @@ import Documentation from './components/Documentation'
 import ChatModal from './components/ChatModal'
 import LocationModal from './components/LocationModal'
 import { useApp } from './context/AppContext'
+import { sidebarCache } from './utils/sidebarIndexCache'
+import { useEffect } from 'react'
 import './App.css'
 
 const queryClient = new QueryClient({
@@ -24,6 +26,12 @@ const queryClient = new QueryClient({
 
 function AppContent() {
   const { isChatOpen, chatDomain, closeChat, showLocationModal, handleLocationAllow, handleLocationDeny } = useApp();
+
+  // Initialize sidebar cache globally on app mount
+  useEffect(() => {
+    sidebarCache.initialize();
+    window.sidebarCache = sidebarCache;
+  }, []);
 
   return (
     <>

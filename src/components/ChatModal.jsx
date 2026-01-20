@@ -18,7 +18,9 @@ const ChatModal = ({ isOpen, onClose, domain = 'general' }) => {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loadingConversation, setLoadingConversation] = useState(false);
   const [expandedDocs, setExpandedDocs] = useState({});
+  const [navigating, setNavigating] = useState(false);
   const { userLocation } = useApp();
   const navigate = useNavigate();
   const lastScrolledMessageCount = useRef(0);
@@ -26,28 +28,51 @@ const ChatModal = ({ isOpen, onClose, domain = 'general' }) => {
   const messagesContainerRef = useRef(null);
   const textareaRef = useRef(null);
   const API_BASE = import.meta.env.VITE_AI_URL || 'http://localhost:8000';
-  const STRAPI_BASE = import.meta.env.VITE_API_BASE_URL;
 
-  const handleDocumentView = (filepath) => {
+  const handleDocumentView = async (filepath) => {
     if (!filepath) return;
-    onClose();
-    
-    // Get the branch for this document
-    const branch = window.sidebarCache?.getBranchByFilepath(filepath);
-    
-    if (branch) {
-      navigate(`/documentation/${branch}`);
-    } else {
-      navigate(`/documentation`);
+
+    setNavigating(true);
+
+    // Ensure cache is initialized
+    let attempts = 0;
+    while (!window.sidebarCache?.isReady() && attempts < 50) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      attempts++;
     }
-    
-    setTimeout(() => {
+
+    if (!window.sidebarCache?.isReady()) {
+      console.error('❌ Cache not ready after waiting');
+      setNavigating(false);
+      return;
+    }
+
+    const branch = window.sidebarCache.getBranchByFilepath(filepath);
+    console.log('🔗 Navigating:', { filepath, branch, cacheReady: window.sidebarCache.isReady() });
+
+    if (branch) {
+      window.__pendingDocNavigation = { filepath };
+      navigate(`/documentation/${branch}`);
+      
       const event = new CustomEvent('navigateToDoc', { detail: { filepath } });
       window.dispatchEvent(event);
-    }, 100);
+    } else {
+      console.error('❌ No branch found for filepath:', filepath);
+      setNavigating(false);
+    }
   };
 
   useLinkHandler(messagesContainerRef.current);
+
+  // Listen for navigation complete event
+  useEffect(() => {
+    const handleNavComplete = () => {
+      setNavigating(false);
+      onClose();
+    };
+    window.addEventListener('docNavigationComplete', handleNavComplete);
+    return () => window.removeEventListener('docNavigationComplete', handleNavComplete);
+  }, [onClose]);
 
   useEffect(() => {
     const container = messagesContainerRef.current;
@@ -104,6 +129,7 @@ const ChatModal = ({ isOpen, onClose, domain = 'general' }) => {
   }, [isOpen]);
 
   const loadConversation = async (id) => {
+    setLoadingConversation(true);
     try {
       const response = await fetch(`${API_BASE}/api/v1/conversations/${id}`);
       if (response.status === 404) {
@@ -111,6 +137,7 @@ const ChatModal = ({ isOpen, onClose, domain = 'general' }) => {
         localStorage.removeItem(`${PREFIX}_conversation_id`);
         setConversationId(null);
         setMessages([]);
+        setLoadingConversation(false);
         return;
       }
       const data = await response.json();
@@ -149,6 +176,8 @@ const ChatModal = ({ isOpen, onClose, domain = 'general' }) => {
       localStorage.removeItem(`${PREFIX}_conversation_id`);
       setConversationId(null);
       setMessages([]);
+    } finally {
+      setLoadingConversation(false);
     }
   };
 
@@ -207,7 +236,7 @@ const ChatModal = ({ isOpen, onClose, domain = 'general' }) => {
     }
 
     const htmlContent = marked.parse(markdown);
-    
+
     // Replace <a> tags with .xml links to clickable spans
     const processedHtml = htmlContent.replace(
       /<a href="([^"]*\.xml)"[^>]*>([^<]+)<\/a>/g,
@@ -216,7 +245,7 @@ const ChatModal = ({ isOpen, onClose, domain = 'general' }) => {
         return `<span class="doc-link" data-filepath="${filepath}">${displayText}</span>`;
       }
     );
-    
+
     setMessages(prev => prev.map((msg, idx) =>
       idx === prev.length - 1 ? { ...msg, content: processedHtml, supportingDocs } : msg
     ));
@@ -316,7 +345,7 @@ const ChatModal = ({ isOpen, onClose, domain = 'general' }) => {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4"
-          onClick={onClose}
+          onClick={navigating ? undefined : onClose}
         >
           <motion.div
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -326,6 +355,27 @@ const ChatModal = ({ isOpen, onClose, domain = 'general' }) => {
             onClick={(e) => e.stopPropagation()}
             className="bg-white rounded-xl sm:rounded-2xl w-full max-w-4xl h-[90vh] sm:h-[85vh] md:h-[80vh] flex flex-col shadow-2xl"
           >
+            {navigating && (
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="absolute inset-0 bg-white/95 backdrop-blur-sm flex items-center justify-center z-50 rounded-xl sm:rounded-2xl"
+              >
+                <div className="text-center">
+                  <div className="relative w-20 h-20 mx-auto mb-4">
+                    <div className="absolute inset-0 border-4 border-accent-blue/20 rounded-full"></div>
+                    <div className="absolute inset-0 border-4 border-accent-blue border-t-transparent rounded-full animate-spin"></div>
+                    <div className="absolute inset-2 bg-gradient-to-br from-accent-blue/10 to-accent-purple/10 rounded-full flex items-center justify-center">
+                      <svg className="w-8 h-8 text-accent-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                  </div>
+                  <p className="text-gray-700 font-semibold text-lg">Opening document...</p>
+                  <p className="text-gray-500 text-sm mt-1">Please wait</p>
+                </div>
+              </motion.div>
+            )}
             {/* Header */}
             <div className="flex items-center justify-between p-3 sm:p-4 border-b border-gray-200 bg-gradient-to-r from-accent-blue/5 to-accent-purple/5">
               <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
@@ -374,7 +424,17 @@ const ChatModal = ({ isOpen, onClose, domain = 'general' }) => {
 
             {/* Messages */}
             <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 space-y-3 sm:space-y-4 bg-gradient-to-b from-white to-gray-50 modal-scrollbar">
-              {messages.length === 0 ? (
+              {loadingConversation ? (
+                <div className="space-y-4">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="flex justify-start">
+                      <div className="max-w-[75%] space-y-2">
+                        <div className="bg-gray-200 rounded-2xl h-20 w-80 animate-pulse"></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center px-4">
                   <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-accent-blue to-accent-purple rounded-full flex items-center justify-center mb-3 sm:mb-4">
                     <svg className="w-6 h-6 sm:w-8 sm:h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -388,8 +448,8 @@ const ChatModal = ({ isOpen, onClose, domain = 'general' }) => {
                 messages.map((msg, idx) => (
                   <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[85%] sm:max-w-[75%] md:max-w-[70%] ${msg.role === 'user'
-                        ? 'bg-gradient-to-r from-accent-blue to-accent-purple text-white rounded-2xl px-3 py-2 sm:px-4 sm:py-3 shadow-md'
-                        : 'space-y-2'
+                      ? 'bg-gradient-to-r from-accent-blue to-accent-purple text-white rounded-2xl px-3 py-2 sm:px-4 sm:py-3 shadow-md'
+                      : 'space-y-2'
                       }`}>
                       {msg.role === 'user' ? (
                         <p className="text-xs sm:text-sm whitespace-pre-wrap">{msg.content}</p>

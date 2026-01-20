@@ -195,18 +195,21 @@ class SidebarIndexCache {
   }
 
   getBranchByFilepath(filepath) {
-    if (!filepath || !this.cache) return null;
+    if (!filepath || !this.cache) {
+      console.log('❌ getBranchByFilepath: no filepath or cache', { filepath, hasCache: !!this.cache });
+      return null;
+    }
     
     const normalized = filepath.replace(/\\/g, '/').toLowerCase().trim().replace('.xml', '.html');
     const filename = normalized.split('/').pop();
     const domain = normalized.split('/')[0];
     
+    console.log('🔍 getBranchByFilepath:', { normalized, filename, domain, availableDomains: this.cache.map(m => m.domain) });
+    
     // First try: match by domain prefix
     for (const module of this.cache) {
       if (module.domain === domain) {
         console.log(`📦 Found module by domain "${domain}":`, module.branch);
-        const moduleMappings = this.getMappingsByBranch(module.branch);
-        console.log(`📋 All mappings for "${module.branch}":`, moduleMappings);
         return module.branch;
       }
     }
@@ -217,13 +220,12 @@ class SidebarIndexCache {
         const docFilename = (doc.attributes?.fileName || doc.attributes?.filename || '').toLowerCase().split('/').pop();
         if (docFilename === filename || docFilename === filename.replace(/\.(html|xml)$/, '')) {
           console.log(`📦 Found module by filename "${filename}":`, module.branch);
-          const moduleMappings = this.getMappingsByBranch(module.branch);
-          console.log(`📋 All mappings for "${module.branch}":`, moduleMappings);
           return module.branch;
         }
       }
     }
     
+    console.warn('❌ No branch found for:', { normalized, domain, filename });
     return null;
   }
 
